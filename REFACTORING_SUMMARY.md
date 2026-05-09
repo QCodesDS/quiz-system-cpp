@@ -71,12 +71,14 @@ Split the monolithic `UserService` (which had 5+ reasons to change) into **4 sin
 - **Old Responsibility:** Everything (VIOLATES SRP)
 - **New Responsibility:** Coordinate between services + generic operations
 - **Dependencies Injected:**
-  ```cpp
+
+```cpp
   UserService(IUserRepository *userRepo,
               IdGeneratorService *idGen,
               TeacherService *teacherSvc,
               StudentService *studentSvc)
-  ```
+```
+
 - **Methods NOW Delegate:**
   - `addTeacher()` → `teacherSvc->addTeacher()`
   - `addStudent()` → `studentSvc->addStudent()`
@@ -96,7 +98,7 @@ Split the monolithic `UserService` (which had 5+ reasons to change) into **4 sin
 
 ### BEFORE (GOD SERVICE ANTI-PATTERN)
 
-```
+```bash
 UserService
 ├── Teacher CRUD logic
 ├── Student CRUD logic
@@ -109,7 +111,7 @@ UserService
 
 ### AFTER (SRP COMPLIANT)
 
-```
+```bash
 UserService (Facade)
 ├── delegates to → TeacherService (1 reason to change)
 ├── delegates to → StudentService (1 reason to change)

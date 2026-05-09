@@ -1,5 +1,6 @@
 #include "AuthService.h"
 #include <functional> // std::hash
+#include <memory>
 
 // ============================================================
 //  services/AuthService.cpp
@@ -21,36 +22,31 @@ std::string AuthService::hashPassword(const std::string &plain)
 
 // ------------------------------------------------------------
 //  login
-//  Trả nullptr nếu username không tồn tại hoặc sai password.
-//  currentUser được set — gọi logout() để clear.
+//  Returns raw pointer to currentUser (AuthService owns via unique_ptr)
 // ------------------------------------------------------------
 User *AuthService::login(const std::string &username, const std::string &password)
 {
-    User *user = userRepo->findByUsername(username);
+    auto user = userRepo->findByUsername(username);
     if (!user)
         return nullptr;
 
     if (user->getPassword() != hashPassword(password))
-    {
-        delete user;
-        return nullptr;
-    }
+        return nullptr; // user unique_ptr auto-cleans up on return
 
-    // Giải phóng session cũ nếu có
-    delete currentUser;
-    currentUser = user;
-    return currentUser;
+    // Release old session and store new user
+    currentUser = std::move(user);
+    return currentUser.get();
 }
 
 void AuthService::logout()
 {
-    delete currentUser;
-    currentUser = nullptr;
+    currentUser.reset(); // Use reset() instead of delete
 }
 
 // ------------------------------------------------------------
 //  changePassword
-//  Validate → update object → persist toàn bộ user list.
+//  Load all users, update target user, save all back
+//  Works with unique_ptr vector from repository
 // ------------------------------------------------------------
 bool AuthService::changePassword(User *user, const std::string &newPass)
 {
@@ -64,8 +60,8 @@ bool AuthService::changePassword(User *user, const std::string &newPass)
         return false;
 
     // Persist — load all, thay đổi đúng user, save lại
-    auto all = userRepo->load();
-    for (auto *u : all)
+    auto all = userRepo->load(); // Returns vector<unique_ptr<User>>
+    for (auto &u : all)
     {
         if (u && u->getId() == user->getId())
         {
@@ -74,23 +70,22 @@ bool AuthService::changePassword(User *user, const std::string &newPass)
         }
     }
     bool ok = userRepo->save(all);
-    for (auto *u : all)
-        delete u;
+    // Vector auto-cleans up when it goes out of scope
     return ok;
 }
 
 User *AuthService::getCurrentUser()
 {
-    return currentUser;
+    return currentUser.get(); // Return raw pointer (non-owning)
 }
 
 bool AuthService::validateCredentials(const std::string &username,
                                       const std::string &password)
 {
-    User *user = userRepo->findByUsername(username);
+    auto user = userRepo->findByUsername(username);
     if (!user)
         return false;
     bool valid = (user->getPassword() == hashPassword(password));
-    delete user;
+    // user unique_ptr auto-cleans up
     return valid;
 }

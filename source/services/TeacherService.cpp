@@ -1,6 +1,7 @@
 #include "TeacherService.h"
 #include "IdGeneratorService.h"
 #include <algorithm>
+#include <memory>
 
 // ============================================================
 //  services/TeacherService.cpp
@@ -8,9 +9,6 @@
 //  SINGLE RESPONSIBILITY: Manage Teacher CRUD
 //  Extracted from UserService (SRP fix)
 // ============================================================
-
-TeacherService::TeacherService(IUserRepository *userRepo)
-    : userRepo(userRepo) {}
 
 // ============================================================
 //  Validation Helpers
@@ -49,25 +47,25 @@ bool TeacherService::addTeacher(const std::string &username,
     if (usernameExists(username))
         return false;
 
-    // Load existing users
-    UserList ul;
-    ul.users = userRepo->load();
+    // Load existing users (unique_ptr managed)
+    auto users = userRepo->load();
 
     // Generate new teacher ID
     UserId newId = 2000;
-    for (const auto *u : ul.users)
+    for (const auto &u : users)
     {
         if (u && u->getRole() == "Teacher" && u->getId() > newId)
             newId = u->getId();
     }
     newId++;
 
-    // Create new teacher (caller via repository allocates, we add to list)
-    ul.users.push_back(
-        new Teacher(newId, username, password, fullName, subject, assignedClass));
+    // Create new teacher
+    users.push_back(
+        std::make_unique<Teacher>(newId, username, password, fullName, subject, assignedClass));
 
     // Persist
-    return userRepo->save(ul.users);
+    return userRepo->save(users);
+    // Vector goes out of scope and cleans up all unique_ptrs
 }
 
 // ============================================================
@@ -79,33 +77,30 @@ bool TeacherService::updateTeacher(UserId id,
                                    const std::string &subject,
                                    const std::string &assignedClass)
 {
-    UserList ul;
-    ul.users = userRepo->load();
+    auto users = userRepo->load();
 
     bool found = false;
-    for (std::size_t i = 0; i < ul.users.size(); ++i)
+    for (auto &u : users)
     {
-        User *u = ul.users[i];
         if (!u || u->getId() != id || u->getRole() != "Teacher")
             continue;
 
-        Teacher *t = static_cast<Teacher *>(u);
+        Teacher *t = static_cast<Teacher *>(u.get());
         // Create updated teacher with same id/username/password
-        Teacher *updated = new Teacher(
+        // Release from unique_ptr to create new one
+        u = std::make_unique<Teacher>(
             t->getId(),
             t->getUsername(),
             t->getPassword(),
             fullName,
             subject,
             assignedClass);
-
-        delete ul.users[i];
-        ul.users[i] = updated;
         found = true;
         break;
     }
 
-    return found && userRepo->save(ul.users);
+    return found && userRepo->save(users);
+    // Vector auto-cleans up
 }
 
 // ============================================================
@@ -114,19 +109,18 @@ bool TeacherService::updateTeacher(UserId id,
 
 bool TeacherService::removeTeacher(UserId id)
 {
-    UserList ul;
-    ul.users = userRepo->load();
+    auto users = userRepo->load();
 
-    auto it = std::find_if(ul.users.begin(), ul.users.end(),
-                           [id](User *u)
+    auto it = std::find_if(users.begin(), users.end(),
+                           [id](const std::unique_ptr<User> &u)
                            { return u && u->getId() == id && u->getRole() == "Teacher"; });
 
-    if (it == ul.users.end())
+    if (it == users.end())
         return false;
 
-    delete *it;
-    ul.users.erase(it);
-    return userRepo->save(ul.users);
+    users.erase(it); // unique_ptr auto-cleans up
+    return userRepo->save(users);
+    // Vector goes out of scope and cleans up remaining
 }
 
 // ============================================================
@@ -136,39 +130,34 @@ bool TeacherService::removeTeacher(UserId id)
 std::vector<Teacher *> TeacherService::getAllTeachers() const
 {
     std::vector<Teacher *> result;
-    for (auto *u : userRepo->load())
+    auto users = userRepo->load();
+
+    for (auto &u : users)
     {
         if (u && u->getRole() == "Teacher")
         {
-            result.push_back(static_cast<Teacher *>(u));
-        }
-        else
-        {
-            delete u;
+            // Release ownership from unique_ptr, give raw pointer to caller
+            result.push_back(static_cast<Teacher *>(u.release()));
         }
     }
     return result;
+    // Remaining users in vector auto-clean up
 }
 
 Teacher *TeacherService::findTeacherById(UserId id) const
 {
-    for (auto *u : userRepo->load())
+    auto users = userRepo->load();
+
+    for (auto &u : users)
     {
         if (u && u->getId() == id && u->getRole() == "Teacher")
         {
-            Teacher *t = static_cast<Teacher *>(u);
-            // Delete other users
-            for (auto *other : userRepo->load())
-                if (other && other->getId() != id)
-                    delete other;
-            return t;
-        }
-        else
-        {
-            delete u;
+            // Release and return raw pointer
+            return static_cast<Teacher *>(u.release());
         }
     }
     return nullptr;
+    // Remaining users auto-clean up
 }
 
 // ============================================================
@@ -177,11 +166,10 @@ Teacher *TeacherService::findTeacherById(UserId id) const
 
 bool TeacherService::resetPassword(UserId id, const std::string &newHashedPassword)
 {
-    UserList ul;
-    ul.users = userRepo->load();
+    auto users = userRepo->load();
 
     bool found = false;
-    for (auto *u : ul.users)
+    for (auto &u : users)
     {
         if (u && u->getId() == id && u->getRole() == "Teacher")
         {
@@ -191,5 +179,6 @@ bool TeacherService::resetPassword(UserId id, const std::string &newHashedPasswo
         }
     }
 
-    return found && userRepo->save(ul.users);
+    return found && userRepo->save(users);
+    // Vector auto-cleans up
 }

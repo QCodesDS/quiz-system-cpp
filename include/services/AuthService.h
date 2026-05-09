@@ -7,18 +7,20 @@
 //  Quản lý xác thực và session hiện tại.
 //  Không có cout/cin. Không biết data lưu ở đâu.
 //
-//  currentUser là raw pointer — AuthService KHÔNG sở hữu,
-//  memory được quản lý bởi caller (AppInitializer).
+//  SMART POINTER: currentUser is unique_ptr<User>
+//  Owns the current user session. Uses .reset() for logout,
+//  .move() for login. No manual delete anywhere.
 // ============================================================
 
 #include "IAuthService.h"
 #include "IUserRepository.h"
+#include <memory>
 
 class AuthService : public IAuthService
 {
 private:
     IUserRepository *userRepo;
-    User *currentUser; // nullptr nếu chưa login
+    std::unique_ptr<User> currentUser; // nullptr if not logged in
 
     // Hash đơn giản để minh hoạ — thay bằng bcrypt/SHA ở production
     static std::string hashPassword(const std::string &plain);
