@@ -8,6 +8,7 @@
 class IUserRepository;
 class IExamRepository;
 class IResultRepository;
+class IUserTypeHandler;
 
 class IdGeneratorService;
 class TeacherService;
@@ -39,6 +40,13 @@ class ReportService;
 class ServiceContainer
 {
 private:
+    // ============================================================
+    //  HANDLERS (for User repository type dispatch)
+    // ============================================================
+    std::unique_ptr<IUserTypeHandler> adminHandler;
+    std::unique_ptr<IUserTypeHandler> teacherHandler;
+    std::unique_ptr<IUserTypeHandler> studentHandler;
+
     // ============================================================
     //  REPOSITORIES (lowest layer - no dependencies)
     // ============================================================

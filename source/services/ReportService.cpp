@@ -3,6 +3,7 @@
 #include <map>
 #include <set>
 #include <numeric>
+#include <memory>
 
 // ============================================================
 //  services/ReportService.cpp
@@ -118,7 +119,7 @@ SystemStats ReportService::getSystemStats()
 
     // Đếm user
     auto users = userRepo->load();
-    for (const auto *u : users)
+    for (const auto &u : users)
     {
         if (!u)
             continue;
@@ -127,8 +128,7 @@ SystemStats ReportService::getSystemStats()
         if (u->getRole() == "Teacher")
             ++stats.totalTeachers;
     }
-    for (auto *u : users)
-        delete u;
+    // users vector auto-cleans up
 
     // Thống kê kết quả
     auto results = resultRepo->load();

@@ -7,6 +7,11 @@
 //  Load từ 3 file riêng biệt (admin, teachers, students)
 //  nhưng expose chung qua interface IUserRepository.
 //
+//  HANDLER PATTERN:
+//  - Each handler knows its role, file path, and serialization logic
+//  - UserRepository loops through handlers (NO if/else on role strings)
+//  - Adding new user type = add new handler ONLY (OPEN/CLOSED)
+//
 //  SMART POINTER: All User* allocated with new → returned as unique_ptr
 //  Ownership transferred to caller via unique_ptr
 //  No manual delete in caller code
@@ -14,35 +19,23 @@
 
 #include "FileRepository.h"
 #include "IUserRepository.h"
-#include "Admin.h"
-#include "Teacher.h"
-#include "Student.h"
+#include "handlers/IUserTypeHandler.h"
 #include <memory>
+#include <vector>
 
 class UserRepository : public FileRepository, public IUserRepository
 {
 private:
-    std::string adminFile;
-    std::string teacherFile;
-    std::string studentFile;
-
-    // Parse từng dòng → đúng loại object (returns unique_ptr)
-    std::unique_ptr<Admin> parseAdmin(const std::vector<std::string> &fields) const;
-    std::unique_ptr<Teacher> parseTeacher(const std::vector<std::string> &fields) const;
-    std::unique_ptr<Student> parseStudent(const std::vector<std::string> &fields) const;
-
-    // Helper chuyển string → Gender enum
-    static Gender parseGender(const std::string &s);
-
-    // Load riêng từng file
-    std::vector<std::unique_ptr<User>> loadAdmins() const;
-    std::vector<std::unique_ptr<User>> loadTeachers() const;
-    std::vector<std::unique_ptr<User>> loadStudents() const;
+    // Handler pattern: Each handler manages serialization of one user type
+    // Eliminates if/else on role strings (OPEN/CLOSED PRINCIPLE)
+    std::vector<IUserTypeHandler *> handlers;
 
 public:
-    UserRepository(const std::string &adminFile,
-                   const std::string &teacherFile,
-                   const std::string &studentFile);
+    // Constructor: Inject handlers for dependency injection
+    // Handlers are owned elsewhere (typically ServiceContainer);
+    // UserRepository only borrows raw pointers
+    UserRepository(const std::string &dataDir,
+                   std::vector<IUserTypeHandler *> handlers);
 
     // --- IUserRepository ---
     bool save(const std::vector<std::unique_ptr<User>> &users) override;

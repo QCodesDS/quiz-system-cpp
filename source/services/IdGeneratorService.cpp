@@ -1,5 +1,6 @@
 #include "IdGeneratorService.h"
 #include <algorithm>
+#include <memory>
 
 // ============================================================
 //  services/IdGeneratorService.cpp
@@ -20,16 +21,13 @@ UserId IdGeneratorService::findMaxIdByRole(const std::string &role, UserId defau
     auto all = userRepo->load();
     UserId maxId = defaultMin;
 
-    for (const auto *u : all)
+    for (const auto &u : all)
     {
         if (u && u->getRole() == role && u->getId() > maxId)
             maxId = u->getId();
     }
 
-    // Cleanup: delete loaded users
-    for (auto *u : all)
-        delete u;
-
+    // Vector auto-cleans up when it goes out of scope
     return maxId;
 }
 

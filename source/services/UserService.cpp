@@ -3,6 +3,7 @@
 #include "TeacherService.h"
 #include "StudentService.h"
 #include <algorithm>
+#include <memory>
 
 // ============================================================
 //  services/UserService.cpp
@@ -28,20 +29,14 @@ UserService::UserService(IUserRepository *userRepo,
 User *UserService::findUserById(UserId id) const
 {
     auto all = userRepo->load();
-    for (auto *u : all)
+    for (auto &u : all)
     {
         if (u && u->getId() == id)
         {
-            // Delete other users
-            for (auto *other : all)
-                if (other && other->getId() != id)
-                    delete other;
-            return u;
+            return static_cast<User *>(u.release());
         }
     }
-    // Delete all if not found
-    for (auto *u : all)
-        delete u;
+    // Vector auto-cleans up if not found
     return nullptr;
 }
 
@@ -98,12 +93,12 @@ bool UserService::updateStudent(UserId id,
 bool UserService::removeUser(UserId id)
 {
     // Find user to determine type
-    User *user = findUserById(id);
+    std::unique_ptr<User> user(findUserById(id));
     if (!user)
         return false;
 
     std::string role = user->getRole();
-    delete user;
+    // user unique_ptr will auto-cleanup when it goes out of scope
 
     if (role == "Teacher")
     {
@@ -124,12 +119,12 @@ bool UserService::removeUser(UserId id)
 bool UserService::resetPassword(UserId id, const std::string &newHashedPass)
 {
     // Find user to determine type
-    User *user = findUserById(id);
+    std::unique_ptr<User> user(findUserById(id));
     if (!user)
         return false;
 
     std::string role = user->getRole();
-    delete user;
+    // user unique_ptr will auto-cleanup when it goes out of scope
 
     if (role == "Teacher")
     {

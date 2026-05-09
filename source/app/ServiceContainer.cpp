@@ -5,10 +5,16 @@
 #include "ExamRepository.h"
 #include "ResultRepository.h"
 
+// Include all handler implementations (USER TYPE HANDLERS)
+#include "handlers/AdminHandler.h"
+#include "handlers/TeacherHandler.h"
+#include "handlers/StudentHandler.h"
+
 // Include all repository interfaces
 #include "IUserRepository.h"
 #include "IExamRepository.h"
 #include "IResultRepository.h"
+#include "handlers/IUserTypeHandler.h"
 
 // Include all service implementations
 #include "IdGeneratorService.h"
@@ -86,11 +92,26 @@ void ServiceContainer::initialize()
 
 void ServiceContainer::initializeRepositories()
 {
-    // UserRepository: Load from 3 user files
-    userRepo = std::make_unique<UserRepository>(
-        ADMIN_FILE,
-        TEACHER_FILE,
-        STUDENT_FILE);
+    // ============================================================
+    //  Create User Type Handlers (HANDLER PATTERN)
+    //
+    //  Handlers eliminate if/else on role strings in UserRepository.
+    //  Each handler manages serialization of one user type.
+    //  Adding new type = new handler only (OPEN/CLOSED PRINCIPLE)
+    // ============================================================
+
+    adminHandler = std::make_unique<AdminHandler>(ADMIN_FILE);
+    teacherHandler = std::make_unique<TeacherHandler>(TEACHER_FILE);
+    studentHandler = std::make_unique<StudentHandler>(STUDENT_FILE);
+
+    // Collect handler pointers for UserRepository
+    std::vector<IUserTypeHandler *> handlers;
+    handlers.push_back(adminHandler.get());
+    handlers.push_back(teacherHandler.get());
+    handlers.push_back(studentHandler.get());
+
+    // UserRepository: Uses handlers instead of if/else (HANDLER PATTERN)
+    userRepo = std::make_unique<UserRepository>(DATA_DIR, handlers);
 
     // ExamRepository: Load exams and questions
     examRepo = std::make_unique<ExamRepository>(

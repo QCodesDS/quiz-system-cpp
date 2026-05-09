@@ -1,6 +1,7 @@
 #include "StudentService.h"
 #include "IdGeneratorService.h"
 #include <algorithm>
+#include <memory>
 
 // ============================================================
 //  services/StudentService.cpp
@@ -65,13 +66,12 @@ bool StudentService::addStudent(const std::string &username,
     if (usernameExists(username))
         return false;
 
-    // Load existing users
-    UserList ul;
-    ul.users = userRepo->load();
+    // Load existing users (vector<unique_ptr<User>>)
+    auto users = userRepo->load();
 
     // Generate new student ID
     UserId newId = 1000;
-    for (const auto *u : ul.users)
+    for (const auto &u : users)
     {
         if (u && u->getRole() == "Student" && u->getId() > newId)
             newId = u->getId();
@@ -79,11 +79,12 @@ bool StudentService::addStudent(const std::string &username,
     newId++;
 
     // Create new student
-    ul.users.push_back(
-        new Student(newId, username, password, fullName, className, gender, age, phone));
+    users.push_back(
+        std::make_unique<Student>(newId, username, password, fullName, className, gender, age, phone));
 
     // Persist
-    return userRepo->save(ul.users);
+    return userRepo->save(users);
+    // Vector auto-cleans up remaining unique_ptrs
 }
 
 // ============================================================
@@ -103,19 +104,18 @@ bool StudentService::updateStudent(UserId id,
     if (!isValidPhone(phone))
         return false;
 
-    UserList ul;
-    ul.users = userRepo->load();
+    auto users = userRepo->load();
 
     bool found = false;
-    for (std::size_t i = 0; i < ul.users.size(); ++i)
+    for (auto &u : users)
     {
-        User *u = ul.users[i];
         if (!u || u->getId() != id || u->getRole() != "Student")
             continue;
 
-        Student *s = static_cast<Student *>(u);
+        Student *s = static_cast<Student *>(u.get());
         // Create updated student with same id/username/password
-        Student *updated = new Student(
+        // Reassign unique_ptr (old one auto-cleans)
+        u = std::make_unique<Student>(
             s->getId(),
             s->getUsername(),
             s->getPassword(),
@@ -124,14 +124,12 @@ bool StudentService::updateStudent(UserId id,
             gender,
             age,
             phone);
-
-        delete ul.users[i];
-        ul.users[i] = updated;
         found = true;
         break;
     }
 
-    return found && userRepo->save(ul.users);
+    return found && userRepo->save(users);
+    // Vector auto-cleans up
 }
 
 // ============================================================
@@ -140,20 +138,19 @@ bool StudentService::updateStudent(UserId id,
 
 bool StudentService::removeStudent(UserId id)
 {
-    UserList ul;
-    ul.users = userRepo->load();
+    auto users = userRepo->load();
 
-    auto it = std::find_if(ul.users.begin(), ul.users.end(),
-                           [id](User *u)
+    auto it = std::find_if(users.begin(), users.end(),
+                           [id](const std::unique_ptr<User> &u)
                            { return u && u->getId() == id && u->getRole() == "Student"; });
 
-    if (it == ul.users.end())
+    if (it == users.end())
         return false;
 
-    delete *it;
-    ul.users.erase(it);
-    return userRepo->save(ul.users);
+    users.erase(it); // unique_ptr auto-cleans up
+    return userRepo->save(users);
 }
+// Vector auto-cleans up remaining
 
 // ============================================================
 //  QUERY: Get students
@@ -162,63 +159,47 @@ bool StudentService::removeStudent(UserId id)
 std::vector<Student *> StudentService::getAllStudents() const
 {
     std::vector<Student *> result;
-    for (auto *u : userRepo->load())
+    auto users = userRepo->load();
+    for (auto &u : users)
     {
         if (u && u->getRole() == "Student")
         {
-            result.push_back(static_cast<Student *>(u));
-        }
-        else
-        {
-            delete u;
+            result.push_back(static_cast<Student *>(u.release()));
         }
     }
     return result;
 }
+// Remaining unique_ptrs auto-clean up
 
 std::vector<Student *> StudentService::getStudentsByClass(const std::string &className) const
 {
     std::vector<Student *> result;
-    for (auto *u : userRepo->load())
+    auto users = userRepo->load();
+    for (auto &u : users)
     {
         if (u && u->getRole() == "Student")
         {
-            Student *s = static_cast<Student *>(u);
+            Student *s = static_cast<Student *>(u.get());
             if (s->getClassName() == className)
             {
-                result.push_back(s);
+                result.push_back(static_cast<Student *>(u.release()));
             }
-            else
-            {
-                delete s;
-            }
-        }
-        else
-        {
-            delete u;
         }
     }
     return result;
-}
+} // Remaining unique_ptrs auto-clean up
 
 Student *StudentService::findStudentById(UserId id) const
 {
     auto all = userRepo->load();
-    for (auto *u : all)
+    for (auto &u : all)
     {
         if (u && u->getId() == id && u->getRole() == "Student")
         {
-            Student *s = static_cast<Student *>(u);
-            // Delete other users
-            for (auto *other : all)
-                if (other && other->getId() != id)
-                    delete other;
-            return s;
+            return static_cast<Student *>(u.release());
         }
     }
-    // Delete all if not found
-    for (auto *u : all)
-        delete u;
+    // Vector auto-cleans up if not found
     return nullptr;
 }
 
@@ -228,11 +209,10 @@ Student *StudentService::findStudentById(UserId id) const
 
 bool StudentService::resetPassword(UserId id, const std::string &newHashedPassword)
 {
-    UserList ul;
-    ul.users = userRepo->load();
+    auto users = userRepo->load();
 
     bool found = false;
-    for (auto *u : ul.users)
+    for (auto &u : users)
     {
         if (u && u->getId() == id && u->getRole() == "Student")
         {
@@ -242,5 +222,6 @@ bool StudentService::resetPassword(UserId id, const std::string &newHashedPasswo
         }
     }
 
-    return found && userRepo->save(ul.users);
+    return found && userRepo->save(users);
+    // Vector auto-cleans up
 }
