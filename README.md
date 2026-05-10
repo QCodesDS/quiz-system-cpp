@@ -67,7 +67,7 @@ quiz-system-cpp/
 
 ```bash
 # Clone project
-git clone https://github.com/VanQuot/quiz-system-cpp.git
+git clone https://github.com/QCodesDS/quiz-system-cpp.git
 cd quiz-system-cpp
 
 # Build
