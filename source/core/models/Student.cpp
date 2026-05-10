@@ -1,7 +1,14 @@
+/**
+ * @file Student.cpp
+ * @brief Triển khai các phương thức cụ thể cho lớp Student.
+ */
+
 #include "Student.h"
 #include <iostream>
 
-// Helper nhỏ — chỉ dùng nội bộ file này
+/**
+ * @brief Helper nội bộ chuyển đổi Enum Gender sang chuỗi để lưu trữ hoặc hiển thị.
+ */
 static std::string genderToString(Gender g)
 {
     switch (g)
@@ -20,23 +27,48 @@ Student::Student(UserId id, const std::string &username,
                  const std::string &className, Gender gender, int age,
                  const std::string &phone)
     : User(id, username, password, fullName),
-      _className(className), _gender(gender), _age(age), _phone(phone) {}
+      _className(className),
+      _gender(gender),
+      _age(age),
+      _phone(phone)
+{
+}
+
+// ------------------------------------------------------------
+//  Getters
+// ------------------------------------------------------------
 
 std::string Student::getClassName() const { return _className; }
 Gender Student::getGender() const { return _gender; }
 int Student::getAge() const { return _age; }
 std::string Student::getPhone() const { return _phone; }
 
+// ------------------------------------------------------------
+//  Overrides
+// ------------------------------------------------------------
+
 std::string Student::getRole() const { return "Student"; }
 
 std::string Student::toFileString() const
 {
-    // Format: Student|id|username|password|fullName|className|gender|age|phone
-    return "Student|" + std::to_string(_id) + "|" + _username + "|" + _password + "|" + _fullName + "|" + _className + "|" + genderToString(_gender) + "|" + std::to_string(_age) + "|" + _phone;
+    /**
+     * Đồng bộ hóa định dạng lưu trữ file cho Student.
+     * Lưu ý: Thứ tự các trường phải khớp với trình tự đọc của Repository.
+     */
+    return "Student|" +
+           std::to_string(_id) + "|" +
+           _username + "|" +
+           _password + "|" +
+           _fullName + "|" +
+           _className + "|" +
+           genderToString(_gender) + "|" +
+           std::to_string(_age) + "|" +
+           _phone;
 }
 
 void Student::displayInfo() const
 {
+    // Định dạng hiển thị chi tiết để hỗ trợ việc kiểm tra danh sách trên Console.
     std::cout << "[Student] " << _fullName
               << " | Lớp: " << _className
               << " | " << genderToString(_gender)

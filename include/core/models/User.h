@@ -2,44 +2,31 @@
 #define USER_H
 
 #include <string>
-#include "typedefs.h"
+#include "types/typedefs.h"
 
 /**
- * @file User.h
- * @brief Khai báo lớp cơ sở trừu tượng User.
+ * @class User
+ * @brief Lớp cơ sở trừu tượng (Abstract Base Class) cho mọi người dùng trong hệ thống.
  *
- * User là abstract base class đại diện cho tài khoản
- * trong hệ thống. Các lớp như Admin, Teacher, Student
- * sẽ kế thừa từ lớp này.
- *
- * Responsibilities:
- * - Quản lý thông tin cơ bản của người dùng
- * - Cung cấp interface chung cho các subclass
- * - Định nghĩa contract cho polymorphism
+ * Lớp này định nghĩa các thuộc tính và hành vi chung nhất của một tài khoản.
+ * Các lớp dẫn xuất (Admin, Teacher, Student) bắt buộc phải thực thi các phương thức
+ * thuần ảo để xác định vai trò và cách thức lưu trữ riêng biệt.
  */
 class User
 {
 protected:
-    /// Mã định danh của người dùng
-    UserId _id;
-
-    /// Username dùng cho xác thực đăng nhập
-    std::string _username;
-
-    /// Password đã được hash
-    std::string _password;
-
-    /// Họ tên đầy đủ
-    std::string _fullName;
+    UserId _id;            ///< Mã định danh duy nhất của người dùng.
+    std::string _username; ///< Tên đăng nhập dùng để định danh khi xác thực.
+    std::string _password; ///< Mật khẩu (khuyến nghị lưu trữ dưới dạng hash).
+    std::string _fullName; ///< Họ và tên đầy đủ của người dùng.
 
 public:
     /**
-     * @brief Khởi tạo đối tượng User.
-     *
-     * @param id         Mã định danh người dùng
-     * @param username   Tên đăng nhập
-     * @param password   Mật khẩu đã hash
-     * @param fullName   Họ tên đầy đủ
+     * @brief Khởi tạo đối tượng User cơ bản.
+     * @param id Mã định danh.
+     * @param username Tên đăng nhập.
+     * @param password Mật khẩu đã mã hóa.
+     * @param fullName Họ và tên.
      */
     User(UserId id,
          const std::string &username,
@@ -47,74 +34,54 @@ public:
          const std::string &fullName);
 
     /**
-     * @brief Virtual destructor để hỗ trợ polymorphism an toàn.
+     * @brief Virtual destructor.
+     * Đảm bảo việc giải phóng vùng nhớ của các lớp con được thực thi đầy đủ
+     * khi hủy đối tượng thông qua con trỏ lớp cơ sở.
      */
     virtual ~User() = default;
 
-    // ============================================================
-    //    Getters
-    // ============================================================
+    // ------------------------------------------------------------
+    //  Getters
+    // ------------------------------------------------------------
 
-    /**
-     * @brief Lấy ID của người dùng.
-     * @return UserId
-     */
     UserId getId() const;
-
-    /**
-     * @brief Lấy username của người dùng.
-     * @return std::string
-     */
     std::string getUsername() const;
-
-    /**
-     * @brief Lấy họ tên đầy đủ của người dùng.
-     * @return std::string
-     */
     std::string getFullName() const;
 
     /**
-     * @brief Trả về password hash phục vụ xác thực nội bộ.
+     * @brief Lấy mật khẩu phục vụ mục đích so khớp logic.
+     * @return std::string — Chuỗi password hash.
      */
     std::string getPassword() const;
 
-    // ============================================================
-    //    Setters
-    // ============================================================
+    // ------------------------------------------------------------
+    //  Setters & Business Logic
+    // ------------------------------------------------------------
 
     /**
-     * @brief Cập nhật mật khẩu mới.
-     *
-     * Validation hiện tại:
-     * - Độ dài tối thiểu: 6 ký tự
-     *
-     * @param newPass Mật khẩu mới
-     * @return true  Nếu cập nhật thành công
-     * @return false Nếu mật khẩu không hợp lệ
+     * @brief Cập nhật mật khẩu mới với các điều kiện ràng buộc.
+     * @param newPass Mật khẩu mới cần thiết lập.
+     * @return true nếu mật khẩu hợp lệ (>= 6 ký tự), false nếu ngược lại.
      */
     bool setPassword(const std::string &newPass);
 
-    // ============================================================
-    //    Pure Virtual Functions
-    // ============================================================
+    // ------------------------------------------------------------
+    //  Pure Virtual Functions (Phải override ở lớp con)
+    // ------------------------------------------------------------
 
     /**
-     * @brief Trả về role của người dùng.
-     *
-     * Ví dụ:
-     * - Admin
-     * - Teacher
-     * - Student
+     * @brief Trả về định danh vai trò của người dùng.
+     * @return std::string — "Admin", "Teacher", hoặc "Student".
      */
     virtual std::string getRole() const = 0;
 
     /**
-     * @brief Chuyển object thành chuỗi string để lưu file.
+     * @brief Chuyển đổi dữ liệu đối tượng sang định dạng chuỗi lưu file.
      */
     virtual std::string toFileString() const = 0;
 
     /**
-     * @brief Hiển thị thông tin người dùng.
+     * @brief Hiển thị thông tin tổng quan của người dùng ra console.
      */
     virtual void displayInfo() const = 0;
 };

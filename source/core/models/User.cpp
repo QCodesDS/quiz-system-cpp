@@ -1,3 +1,8 @@
+/**
+ * @file User.cpp
+ * @brief Triển khai các hành vi chung của lớp cơ sở User.
+ */
+
 #include "User.h"
 
 User::User(UserId id,
@@ -9,6 +14,7 @@ User::User(UserId id,
       _password(password),
       _fullName(fullName)
 {
+    // Thành viên được khởi tạo thông qua Member Initializer List.
 }
 
 UserId User::getId() const
@@ -33,15 +39,19 @@ std::string User::getPassword() const
 
 bool User::setPassword(const std::string &newPass)
 {
-    // Kiểm tra độ dài mật khẩu tối thiểu
+    /**
+     * Kiểm tra tính hợp lệ của mật khẩu (Validation logic).
+     * Hiện tại chỉ kiểm tra độ dài tối thiểu là 6.
+     */
     if (newPass.size() < 6)
     {
         return false;
     }
 
-    // TODO:
-    // Thực hiện hash password trước khi lưu
-    // khi tích hợp module bảo mật thực tế.
+    /**
+     * @todo Tích hợp thêm module mã hóa (hashing) trước khi gán
+     * vào biến _password để tăng tính bảo mật cho hệ thống.
+     */
     _password = newPass;
 
     return true;
