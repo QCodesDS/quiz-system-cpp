@@ -1,7 +1,6 @@
 #ifndef I_AUTH_SERVICE_H
 #define I_AUTH_SERVICE_H
 
-#include <string>
 #include "User.h"
 
 /**

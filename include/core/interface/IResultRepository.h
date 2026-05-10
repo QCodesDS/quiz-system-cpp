@@ -1,7 +1,6 @@
 #ifndef I_RESULT_REPOSITORY_H
 #define I_RESULT_REPOSITORY_H
 
-#include <vector>
 #include "ExamResult.h"
 
 /**

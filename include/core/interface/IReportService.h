@@ -1,8 +1,6 @@
 #ifndef I_REPORT_SERVICE_H
 #define I_REPORT_SERVICE_H
 
-#include <string>
-#include <vector>
 #include "typedefs.h"
 
 /**

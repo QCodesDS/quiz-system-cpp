@@ -2,8 +2,6 @@
 #define I_USER_REPOSITORY_H
 
 #include <memory>
-#include <string>
-#include <vector>
 #include "User.h"
 
 /**

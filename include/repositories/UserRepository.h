@@ -1,43 +1,43 @@
 #ifndef USER_REPOSITORY_H
 #define USER_REPOSITORY_H
 
-// ============================================================
-//  repositories/UserRepository.h
-//
-//  Load từ 3 file riêng biệt (admin, teachers, students)
-//  nhưng expose chung qua interface IUserRepository.
-//
-//  HANDLER PATTERN:
-//  - Each handler knows its role, file path, and serialization logic
-//  - UserRepository loops through handlers (NO if/else on role strings)
-//  - Adding new user type = add new handler ONLY (OPEN/CLOSED)
-//
-//  SMART POINTER: All User* allocated with new → returned as unique_ptr
-//  Ownership transferred to caller via unique_ptr
-//  No manual delete in caller code
-// ============================================================
-
 #include "FileRepository.h"
 #include "IUserRepository.h"
-#include "handlers/IUserTypeHandler.h"
-#include <memory>
-#include <vector>
+#include "IUserTypeHandler.h"
 
+/**
+ * @class UserRepository
+ * @brief Lớp quản lý lưu trữ người dùng tập trung.
+ *
+ * Lớp này kế thừa FileRepository để sử dụng các công cụ đọc/ghi file cơ bản
+ * và triển khai IUserRepository để expose các nghiệp vụ truy vấn dữ liệu.
+ *
+ * @note Sử dụng Handler Pattern: UserRepository không cần biết cách xử lý từng loại User cụ thể,
+ *       nó chỉ lặp qua danh sách các Handlers được tiêm (inject) vào từ constructor.
+ */
 class UserRepository : public FileRepository, public IUserRepository
 {
 private:
-    // Handler pattern: Each handler manages serialization of one user type
-    // Eliminates if/else on role strings (OPEN/CLOSED PRINCIPLE)
-    std::vector<IUserTypeHandler *> handlers;
+    /**
+     * @brief Danh sách các bộ xử lý loại người dùng.
+     * UserRepository chỉ mượn (borrow) con trỏ thô vì vòng đời của các Handler
+     * thường được quản lý bởi ServiceContainer.
+     */
+    std::vector<IUserTypeHandler *> _handlers;
 
 public:
-    // Constructor: Inject handlers for dependency injection
-    // Handlers are owned elsewhere (typically ServiceContainer);
-    // UserRepository only borrows raw pointers
+    /**
+     * @brief Khởi tạo UserRepository với danh sách các bộ xử lý.
+     * @param dataDir Thư mục chứa các tệp dữ liệu.
+     * @param handlers Danh sách các Handler (Admin, Teacher, Student).
+     */
     UserRepository(const std::string &dataDir,
                    std::vector<IUserTypeHandler *> handlers);
 
-    // --- IUserRepository ---
+    // ------------------------------------------------------------
+    //  Triển khai IUserRepository
+    // ------------------------------------------------------------
+
     bool save(const std::vector<std::unique_ptr<User>> &users) override;
     std::vector<std::unique_ptr<User>> load() override;
     bool backup() override;

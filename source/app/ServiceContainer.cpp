@@ -13,9 +13,9 @@
 #include "ExamRepository.h"
 #include "ResultRepository.h"
 
-#include "handlers/AdminHandler.h"
-#include "handlers/TeacherHandler.h"
-#include "handlers/StudentHandler.h"
+#include "AdminHandler.h"
+#include "TeacherHandler.h"
+#include "StudentHandler.h"
 
 #include "IUserRepository.h"
 #include "IExamRepository.h"

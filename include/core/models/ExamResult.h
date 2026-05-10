@@ -1,7 +1,6 @@
 #ifndef EXAM_RESULT_H
 #define EXAM_RESULT_H
 
-#include <string>
 #include "enums.h"
 #include "typedefs.h"
 

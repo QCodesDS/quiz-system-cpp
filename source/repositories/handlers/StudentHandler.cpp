@@ -1,10 +1,20 @@
+/**
+ * @file StudentHandler.cpp
+ * @brief Triển khai logic Serialization và Deserialization cho Student.
+ */
+
 #include "StudentHandler.h"
 #include "Student.h"
 #include "enums.h"
-#include <memory>
 
 StudentHandler::StudentHandler(const std::string &studentFile)
-    : filePath(studentFile) {}
+    : _filePath(studentFile)
+{
+}
+
+// ------------------------------------------------------------
+//  Interface Implementation
+// ------------------------------------------------------------
 
 std::string StudentHandler::getRole() const
 {
@@ -13,7 +23,7 @@ std::string StudentHandler::getRole() const
 
 std::string StudentHandler::getFilePath() const
 {
-    return filePath;
+    return _filePath;
 }
 
 std::vector<std::string> StudentHandler::serialize(
@@ -22,6 +32,7 @@ std::vector<std::string> StudentHandler::serialize(
     std::vector<std::string> result;
     for (const auto &u : users)
     {
+        // Lọc và chỉ serialize những đối tượng thực sự là Student.
         if (u && u->getRole() == "Student")
         {
             result.push_back(u->toFileString());
@@ -30,7 +41,11 @@ std::vector<std::string> StudentHandler::serialize(
     return result;
 }
 
-Gender parseGender(const std::string &s)
+/**
+ * @brief Helper tĩnh để chuyển đổi chuỗi văn bản thành Enum Gender.
+ * Giúp mã nguồn chính trong deserialize gọn gàng hơn.
+ */
+static Gender parseGender(const std::string &s)
 {
     if (s == "Female")
         return Gender::Female;
@@ -46,11 +61,10 @@ std::vector<std::unique_ptr<User>> StudentHandler::deserialize(
 
     for (const auto &line : lines)
     {
-        // Skip empty lines
         if (line.empty())
             continue;
 
-        // Split line by '|'
+        // --- Giai đoạn 1: Tokenizing (Phân tách chuỗi) ---
         std::vector<std::string> fields;
         std::string temp = line;
         size_t pos = 0;
@@ -59,16 +73,16 @@ std::vector<std::unique_ptr<User>> StudentHandler::deserialize(
             fields.push_back(temp.substr(0, pos));
             temp = temp.substr(pos + 1);
         }
-        fields.push_back(temp); // Last field
+        fields.push_back(temp);
 
-        // Skip if first field is not "Student"
+        // --- Giai đoạn 2: Validation (Kiểm tra cấu trúc) ---
+        // Format yêu cầu 9 trường: Role|Id|User|Pass|Name|Class|Gender|Age|Phone
         if (fields.empty() || fields[0] != "Student")
             continue;
-
-        // Parse: Student|id|username|password|fullName|className|gender|age|phone
         if (fields.size() < 9)
             continue;
 
+        // --- Giai đoạn 3: Parsing & Object Creation ---
         try
         {
             UserId id = std::stoi(fields[1]);
@@ -86,7 +100,7 @@ std::vector<std::unique_ptr<User>> StudentHandler::deserialize(
         }
         catch (...)
         {
-            // Skip malformed lines
+            // Bỏ qua các bản ghi lỗi dữ liệu để tránh làm gián đoạn việc load toàn bộ file.
             continue;
         }
     }

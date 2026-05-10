@@ -1,51 +1,42 @@
 #include "ExamRepository.h"
 #include <algorithm>
+#include <cctype>
 #include <map>
 #include <set>
-
-// ============================================================
-//  repositories/ExamRepository.cpp
-// ============================================================
+#include <stdexcept>
 
 ExamRepository::ExamRepository(const std::string &examFile,
                                const std::string &questionsDir)
     : FileRepository(examFile),
-      examFile(examFile),
-      questionsDir(questionsDir) {}
-
-// ------------------------------------------------------------
-//  Helpers
-// ------------------------------------------------------------
-
-// "Math" → "math.txt", "CPP" → "cpp.txt"
-std::string ExamRepository::subjectToFilename(const std::string &subject)
+      _examFile(examFile),
+      _questionsDir(questionsDir)
 {
-    std::string name;
-    name.reserve(subject.size());
-    for (char c : subject)
-        name += static_cast<char>(std::tolower(c));
-    return name + ".txt";
 }
+
+// ------------------------------------------------------------
+//  Parsing Helpers
+// ------------------------------------------------------------
 
 Exam ExamRepository::parseExam(const std::vector<std::string> &f) const
 {
-    // Format: ExamId|Subject|DurationMinutes|ExamType|TeacherId
-    ExamId examId = std::stoi(f[0]);
-    std::string subject = f[1];
-    int duration = std::stoi(f[2]);
+    // Định dạng: ExamId|Subject|DurationMinutes|ExamType|TeacherId
+    ExamId id = std::stoi(f[0]);
+    std::string s = f[1];
+    int dur = std::stoi(f[2]);
     ExamType type = (f[3] == "Official") ? ExamType::Official : ExamType::Practice;
     TeacherId tid = std::stoi(f[4]);
-    return Exam(examId, subject, duration, type, tid);
+
+    return Exam(id, s, dur, type, tid);
 }
 
 Question ExamRepository::parseQuestion(const std::vector<std::string> &f) const
 {
-    // Format: QuestionId|ExamId|Content|ChoiceA|ChoiceB|ChoiceC|ChoiceD|CorrectChoice|Difficulty
+    // Định dạng: QId|ExamId|Content|A|B|C|D|CorrectIdx|Difficulty
     if (f.size() < 9)
-        throw std::invalid_argument("bad question line");
+        throw std::invalid_argument("Dòng dữ liệu câu hỏi không hợp lệ");
 
     QuestionId qid = std::stoi(f[0]);
-    ExamId examId = std::stoi(f[1]);
+    ExamId eid = std::stoi(f[1]);
     int correct = std::stoi(f[7]);
 
     Difficulty diff = Difficulty::Easy;
@@ -54,18 +45,28 @@ Question ExamRepository::parseQuestion(const std::vector<std::string> &f) const
     else if (f[8] == "Hard")
         diff = Difficulty::Hard;
 
-    return Question(qid, examId, f[2], f[3], f[4], f[5], f[6], correct, diff);
+    return Question(qid, eid, f[2], f[3], f[4], f[5], f[6], correct, diff);
 }
 
 // ------------------------------------------------------------
-//  Load
+//  File & Data Helpers
 // ------------------------------------------------------------
+
+std::string ExamRepository::subjectToFilename(const std::string &subject)
+{
+    std::string name;
+    name.reserve(subject.size());
+    for (char c : subject)
+        name += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    return name + ".txt";
+}
 
 std::vector<Exam> ExamRepository::loadExamHeaders() const
 {
     std::vector<Exam> exams;
+    // readLines() mặc định đọc từ _examFile (filePath của lớp cha)
     for (const auto &line : readLines())
-    { // readLines() đọc examFile
+    {
         auto f = splitLine(line);
         if (f.size() < 5)
             continue;
@@ -74,7 +75,7 @@ std::vector<Exam> ExamRepository::loadExamHeaders() const
             exams.push_back(parseExam(f));
         }
         catch (...)
-        { /* bỏ qua dòng lỗi */
+        { /* Skip malformed header */
         }
     }
     return exams;
@@ -91,7 +92,7 @@ std::vector<Question> ExamRepository::loadQuestionsFromFile(const std::string &p
             questions.push_back(parseQuestion(f));
         }
         catch (...)
-        { /* bỏ qua dòng lỗi */
+        { /* Skip malformed question */
         }
     }
     return questions;
@@ -99,23 +100,26 @@ std::vector<Question> ExamRepository::loadQuestionsFromFile(const std::string &p
 
 void ExamRepository::assembleQuestions(std::vector<Exam> &exams) const
 {
-    // Thu thập danh sách môn cần load
+    if (exams.empty())
+        return;
+
+    // Bước 1: Xác định danh sách các môn học cần tải file
     std::set<std::string> subjects;
     for (const auto &e : exams)
         subjects.insert(e.getSubject());
 
-    // Load questions từng file môn, group by examId
+    // Bước 2: Tải câu hỏi từ từng file môn học và nhóm theo ExamId
     std::map<ExamId, std::vector<Question>> qmap;
-    for (const auto &subject : subjects)
+    for (const auto &s : subjects)
     {
-        std::string path = questionsDir + subjectToFilename(subject);
+        std::string path = _questionsDir + subjectToFilename(s);
         for (const auto &q : loadQuestionsFromFile(path))
         {
             qmap[q.getExamId()].push_back(q);
         }
     }
 
-    // Gắn vào đúng exam
+    // Bước 3: Gắn danh sách câu hỏi vào đúng đối tượng Exam
     for (auto &exam : exams)
     {
         auto it = qmap.find(exam.getExamId());
@@ -130,49 +134,46 @@ void ExamRepository::assembleQuestions(std::vector<Exam> &exams) const
 }
 
 // ------------------------------------------------------------
-//  Cache management
+//  Cache Management
 // ------------------------------------------------------------
 
 void ExamRepository::ensureCache()
 {
-    if (cacheLoaded)
+    if (_cacheLoaded)
         return;
-    cache = loadExamHeaders();
-    assembleQuestions(cache);
-    cacheLoaded = true;
+
+    _cache = loadExamHeaders();
+    assembleQuestions(_cache);
+    _cacheLoaded = true;
 }
 
 void ExamRepository::invalidateCache()
 {
-    cache.clear();
-    cacheLoaded = false;
+    _cache.clear();
+    _cacheLoaded = false;
 }
 
 // ------------------------------------------------------------
-//  IExamRepository — public interface
+//  Triển khai IExamRepository
 // ------------------------------------------------------------
 
 std::vector<Exam> ExamRepository::load()
 {
     ensureCache();
-    return cache;
+    return _cache;
 }
 
 bool ExamRepository::save(const std::vector<Exam> &exams)
 {
-    // 1. Ghi exams.txt (chỉ header)
+    // 1. Ghi tệp Header (exams.txt)
     std::vector<std::string> examLines;
-    examLines.reserve(exams.size());
     for (const auto &e : exams)
-    {
         examLines.push_back(e.toFileString());
-    }
 
     if (!safeWrite(examLines))
-        return false; // examFile = this->filePath
+        return false;
 
-    // 2. Gom questions theo môn → ghi từng file môn
-    //    Dùng map<subject, vector<string>>
+    // 2. Phân loại câu hỏi theo môn học để ghi vào các file riêng lẻ
     std::map<std::string, std::vector<std::string>> qLines;
     for (const auto &e : exams)
     {
@@ -184,7 +185,7 @@ bool ExamRepository::save(const std::vector<Exam> &exams)
 
     for (const auto &[subject, lines] : qLines)
     {
-        std::string path = questionsDir + subjectToFilename(subject);
+        std::string path = _questionsDir + subjectToFilename(subject);
         if (!safeWriteTo(path, lines))
             return false;
     }
@@ -196,38 +197,35 @@ bool ExamRepository::save(const std::vector<Exam> &exams)
 bool ExamRepository::backup()
 {
     ensureCache();
+    bool ok = backupFile(); // Backup exam header file
 
-    bool ok = backupFile(); // backup examFile
-
-    // Backup từng file môn
     std::set<std::string> subjects;
-    for (const auto &e : cache)
+    for (const auto &e : _cache)
         subjects.insert(e.getSubject());
+
     for (const auto &s : subjects)
     {
-        std::string path = questionsDir + subjectToFilename(s);
+        std::string path = _questionsDir + subjectToFilename(s);
         ok &= backupFileTo(path);
     }
-
     return ok;
 }
 
 Exam *ExamRepository::findById(ExamId id)
 {
     ensureCache();
-    for (auto &e : cache)
-    {
-        if (e.getExamId() == id)
-            return &e;
-    }
-    return nullptr;
+    auto it = std::find_if(_cache.begin(), _cache.end(),
+                           [id](const Exam &e)
+                           { return e.getExamId() == id; });
+
+    return (it != _cache.end()) ? &(*it) : nullptr;
 }
 
 std::vector<Exam> ExamRepository::findByTeacher(TeacherId teacherId)
 {
     ensureCache();
     std::vector<Exam> result;
-    for (const auto &e : cache)
+    for (const auto &e : _cache)
     {
         if (e.getTeacherId() == teacherId)
             result.push_back(e);

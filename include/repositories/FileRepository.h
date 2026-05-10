@@ -1,50 +1,63 @@
 #ifndef FILE_REPOSITORY_H
 #define FILE_REPOSITORY_H
 
-// ============================================================
-//  repositories/FileRepository.h
-//  Base class cho mọi repository đọc/ghi file .txt
-//
-//  Cung cấp:
-//  - readLines()  : đọc toàn bộ file vào vector<string>,
-//                   bỏ qua dòng trống và dòng bắt đầu bằng '#'
-//  - safeWrite()  : ghi ra .tmp → rename → tránh mất data khi crash
-//  - appendLine() : dùng riêng cho ResultRepository (append-only)
-//
-//  Subclass KHÔNG được tự mở file — luôn gọi qua helper này.
-// ============================================================
-
 #include <string>
 #include <vector>
-#include <fstream>
 
+/**
+ * @class FileRepository
+ * @brief Lớp cơ sở cung cấp các tiện ích xử lý tệp tin văn bản phẳng (.txt).
+ *
+ * Cung cấp cơ chế đọc/ghi an toàn, hỗ trợ backup và phân tách dữ liệu theo delimiter.
+ * Các lớp kế thừa (như UserRepository, ExamRepository) bắt buộc sử dụng các helper
+ * từ lớp này thay vì tự thao tác trực tiếp với luồng tệp (fstream).
+ */
 class FileRepository
 {
 protected:
-    std::string filePath;
+    std::string _filePath; ///< Đường dẫn tệp tin mục tiêu.
 
+    /**
+     * @brief Khởi tạo repository với đường dẫn cụ thể.
+     * Protected constructor đảm bảo lớp này chỉ được sử dụng thông qua kế thừa.
+     */
     explicit FileRepository(const std::string &filePath);
 
-    // Đọc file, lọc comment và dòng trống
+    // ------------------------------------------------------------
+    //  Các phương thức hỗ trợ luồng dữ liệu (Data Stream Helpers)
+    // ------------------------------------------------------------
+
+    /**
+     * @brief Đọc nội dung tệp, tự động loại bỏ dòng trống và chú thích (comment).
+     */
     std::vector<std::string> readLines() const;
 
-    // Ghi toàn bộ lines ra file theo safe write pattern:
-    //   1. Ghi ra filePath + ".tmp"
-    //   2. Nếu OK → rename .tmp → filePath
-    //   3. Nếu lỗi → xoá .tmp, giữ nguyên file gốc
+    /**
+     * @brief Ghi dữ liệu an toàn (Safe Write Pattern).
+     * Cơ chế: Ghi vào .tmp -> Rename .tmp thành file gốc. Giúp tránh mất dữ liệu nếu crash giữa chừng.
+     */
     bool safeWrite(const std::vector<std::string> &lines) const;
 
-    // Tạo bản sao filePath → filePath + ".bak"
+    /**
+     * @brief Tạo bản sao lưu dự phòng (filePath.bak).
+     */
     bool backupFile() const;
 
-    // Append một dòng vào cuối file (không rewrite — dùng cho results)
+    /**
+     * @brief Ghi thêm một dòng vào cuối tệp (Append mode).
+     * Thích hợp cho các tệp nhật ký (Logs) hoặc kết quả thi (Results).
+     */
     bool appendLine(const std::string &line) const;
 
-    // Tách một dòng theo delimiter '|'
+    /**
+     * @brief Phân tách chuỗi dựa trên ký tự phân cách (mặc định là '|').
+     */
     static std::vector<std::string> splitLine(const std::string &line, char delimiter = '|');
 
-    // Static overload — dùng khi cần thao tác file không phải this->filePath
-    // (ví dụ UserRepository cần ghi cả 3 file riêng biệt)
+    // ------------------------------------------------------------
+    //  Các Static Overloads (Dùng khi thao tác đường dẫn linh hoạt)
+    // ------------------------------------------------------------
+
     static std::vector<std::string> readLinesFrom(const std::string &path);
     static bool safeWriteTo(const std::string &path, const std::vector<std::string> &lines);
     static bool backupFileTo(const std::string &path);

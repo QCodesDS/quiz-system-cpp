@@ -1,7 +1,6 @@
 #ifndef I_EXAM_SERVICE_H
 #define I_EXAM_SERVICE_H
 
-#include <string>
 #include "Exam.h"
 #include "Question.h"
 #include "enums.h"

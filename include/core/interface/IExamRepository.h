@@ -1,7 +1,6 @@
 #ifndef I_EXAM_REPOSITORY_H
 #define I_EXAM_REPOSITORY_H
 
-#include <vector>
 #include "Exam.h"
 
 /**

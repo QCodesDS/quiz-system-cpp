@@ -1,7 +1,6 @@
 #ifndef I_QUIZ_SERVICE_H
 #define I_QUIZ_SERVICE_H
 
-#include <vector>
 #include "Exam.h"
 #include "ExamResult.h"
 

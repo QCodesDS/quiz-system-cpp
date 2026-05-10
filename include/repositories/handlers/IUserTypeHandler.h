@@ -1,22 +1,5 @@
-#ifndef IUSERTYPE_HANDLER_H
-#define IUSERTYPE_HANDLER_H
-
-// ============================================================
-//  repositories/handlers/IUserTypeHandler.h
-//
-//  HANDLER PATTERN interface to eliminate if/else on role strings
-//  in UserRepository.
-//
-//  Each concrete handler knows:
-//  - Its role (Admin/Teacher/Student)
-//  - Its file path
-//  - How to parse its type (deserialize)
-//  - How to format its type (serialize)
-//
-//  OPEN/CLOSED PRINCIPLE:
-//  - Open for extension: Add new handler → new type supported
-//  - Closed for modification: UserRepository unchanged
-// ============================================================
+#ifndef I_USERTYPE_HANDLER_H
+#define I_USERTYPE_HANDLER_H
 
 #include <string>
 #include <vector>
@@ -24,38 +7,54 @@
 
 class User;
 
+/**
+ * @class IUserTypeHandler
+ * @brief Giao diện (Interface) cho các bộ xử lý phân loại người dùng.
+ *
+ * Áp dụng Strategy/Handler Pattern để tách biệt logic xử lý lưu trữ (Serialization/Deserialization)
+ * của từng loại User (Admin, Teacher, Student) ra khỏi lớp quản lý chung.
+ *
+ * @note Thiết kế này tuân thủ nguyên tắc Open/Closed: Khi thêm loại người dùng mới,
+ *       chỉ cần tạo thêm một Handler mới mà không cần sửa đổi UserRepository.
+ */
 class IUserTypeHandler
 {
 public:
+    /**
+     * @brief Virtual destructor.
+     * Đảm bảo việc giải phóng tài nguyên an toàn cho các lớp dẫn xuất.
+     */
     virtual ~IUserTypeHandler() = default;
 
     /**
-     * @brief Get the role this handler manages (Admin/Teacher/Student)
-     * @return std::string role string
+     * @brief Trả về vai trò mà Handler này quản lý.
+     * @return std::string — "Admin", "Teacher" hoặc "Student".
      */
     virtual std::string getRole() const = 0;
 
     /**
-     * @brief Get the file path this handler reads from/writes to
-     * @return std::string file path
+     * @brief Trả về đường dẫn tệp tin tương ứng với loại người dùng này.
+     * @return std::string — Đường dẫn tệp tin (ví dụ: "data/teachers.txt").
      */
     virtual std::string getFilePath() const = 0;
 
     /**
-     * @brief Serialize users to file format strings
-     * @param users Vector of unique_ptr<User> (borrowed reference, not transferred)
-     * @return Vector of formatted strings ready to write to file
+     * @brief Chuyển đổi danh sách đối tượng User thành định dạng chuỗi để lưu tệp.
+     *
+     * @param users Vector chứa các con trỏ unique_ptr<User> (tham chiếu hằng, không chuyển quyền sở hữu).
+     * @return std::vector<std::string> — Danh sách các dòng văn bản đã được định dạng.
      */
     virtual std::vector<std::string> serialize(
         const std::vector<std::unique_ptr<User>> &users) = 0;
 
     /**
-     * @brief Deserialize file lines to User objects
-     * @param lines Vector of lines read from file
-     * @return Vector of unique_ptr<User> (ownership transferred to caller)
+     * @brief Chuyển đổi các dòng văn bản từ tệp thành danh sách đối tượng User.
+     *
+     * @param lines Danh sách các dòng văn bản đọc được từ tệp.
+     * @return std::vector<std::unique_ptr<User>> — Danh sách đối tượng (chuyển quyền sở hữu cho caller).
      */
     virtual std::vector<std::unique_ptr<User>> deserialize(
         const std::vector<std::string> &lines) = 0;
 };
 
-#endif // IUSERTYPE_HANDLER_H
+#endif // I_USERTYPE_HANDLER_H

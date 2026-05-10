@@ -1,11 +1,7 @@
 #ifndef EXAM_H
 #define EXAM_H
 
-#include <string>
-#include <vector>
 #include "Question.h"
-#include "types/enums.h"
-#include "types/typedefs.h"
 
 /**
  * @class Exam

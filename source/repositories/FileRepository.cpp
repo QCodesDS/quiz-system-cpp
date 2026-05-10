@@ -1,59 +1,49 @@
 #include "FileRepository.h"
-
 #include <fstream>
 #include <sstream>
 #include <cstdio>
-#include <stdexcept>
-
-// ============================================================
-//  repositories/FileRepository.cpp
-// ============================================================
 
 FileRepository::FileRepository(const std::string &filePath)
-    : filePath(filePath) {}
+    : _filePath(filePath)
+{
+}
 
 // ------------------------------------------------------------
-//  readLines
-//  Đọc toàn bộ file, bỏ qua:
-//    - dòng trống
-//    - dòng bắt đầu bằng '#' (comment)
+//  Các phương thức hỗ trợ luồng dữ liệu (Data Stream Helpers)
 // ------------------------------------------------------------
+
 std::vector<std::string> FileRepository::readLines() const
 {
     std::vector<std::string> result;
+    std::ifstream file(_filePath);
 
-    std::ifstream file(filePath);
     if (!file.is_open())
-    {
-        // File chưa tồn tại → trả vector rỗng, không crash
         return result;
-    }
 
     std::string line;
     while (std::getline(file, line))
     {
-        // Trim '\r' nếu file có CRLF line ending (Windows)
+        // Xử lý ký tự kết thúc dòng của Windows (\r\n)
         if (!line.empty() && line.back() == '\r')
         {
             line.pop_back();
         }
+
+        // Bỏ qua dòng trống hoặc dòng chú thích bắt đầu bằng '#'
         if (line.empty() || line[0] == '#')
             continue;
+
         result.push_back(line);
     }
 
     return result;
 }
 
-// ------------------------------------------------------------
-//  safeWrite
-//  Ghi an toàn: write .tmp → rename, tránh mất data khi crash
-// ------------------------------------------------------------
 bool FileRepository::safeWrite(const std::vector<std::string> &lines) const
 {
-    std::string tmpPath = filePath + ".tmp";
+    std::string tmpPath = _filePath + ".tmp";
 
-    // Bước 1: ghi ra file tạm
+    // Giai đoạn 1: Ghi vào tệp tạm thời
     std::ofstream tmp(tmpPath, std::ios::out | std::ios::trunc);
     if (!tmp.is_open())
         return false;
@@ -70,9 +60,10 @@ bool FileRepository::safeWrite(const std::vector<std::string> &lines) const
     }
     tmp.close();
 
-    // Bước 2: rename .tmp → file gốc
-    // std::rename trả 0 nếu thành công
-    if (std::rename(tmpPath.c_str(), filePath.c_str()) != 0)
+    // Giai đoạn 2: Thay thế tệp gốc bằng tệp tạm (Atomic-like rename)
+    // Lưu ý: Trên Windows, rename có thể fail nếu file gốc đang mở.
+    std::remove(_filePath.c_str());
+    if (std::rename(tmpPath.c_str(), _filePath.c_str()) != 0)
     {
         std::remove(tmpPath.c_str());
         return false;
@@ -81,17 +72,13 @@ bool FileRepository::safeWrite(const std::vector<std::string> &lines) const
     return true;
 }
 
-// ------------------------------------------------------------
-//  backupFile
-//  Copy filePath → filePath + ".bak"
-// ------------------------------------------------------------
 bool FileRepository::backupFile() const
 {
-    std::ifstream src(filePath, std::ios::binary);
+    std::ifstream src(_filePath, std::ios::binary);
     if (!src.is_open())
-        return false; // không có file gốc → không cần backup
+        return false;
 
-    std::string bakPath = filePath + ".bak";
+    std::string bakPath = _filePath + ".bak";
     std::ofstream dst(bakPath, std::ios::binary | std::ios::trunc);
     if (!dst.is_open())
         return false;
@@ -100,24 +87,16 @@ bool FileRepository::backupFile() const
     return dst.good();
 }
 
-// ------------------------------------------------------------
-//  appendLine
-//  Chỉ dùng cho results.txt — không bao giờ rewrite toàn bộ
-// ------------------------------------------------------------
 bool FileRepository::appendLine(const std::string &line) const
 {
-    std::ofstream file(filePath, std::ios::app);
+    std::ofstream file(_filePath, std::ios::app);
     if (!file.is_open())
         return false;
+
     file << line << "\n";
     return file.good();
 }
 
-// ------------------------------------------------------------
-//  splitLine
-//  Tách "A|B|C" → {"A", "B", "C"}
-//  Giữ nguyên field trống (ví dụ "A||C" → {"A", "", "C"})
-// ------------------------------------------------------------
 std::vector<std::string> FileRepository::splitLine(const std::string &line, char delimiter)
 {
     std::vector<std::string> tokens;
@@ -129,7 +108,7 @@ std::vector<std::string> FileRepository::splitLine(const std::string &line, char
         tokens.push_back(token);
     }
 
-    // Nếu dòng kết thúc bằng delimiter → thêm field rỗng
+    // Xử lý trường hợp dòng kết thúc bằng ký tự phân cách (field cuối rỗng)
     if (!line.empty() && line.back() == delimiter)
     {
         tokens.push_back("");
@@ -139,24 +118,20 @@ std::vector<std::string> FileRepository::splitLine(const std::string &line, char
 }
 
 // ------------------------------------------------------------
-//  Static overloads — thao tác với filePath bất kỳ
+//  Các Static Overloads (Dùng khi thao tác đường dẫn linh hoạt)
 // ------------------------------------------------------------
 
 std::vector<std::string> FileRepository::readLinesFrom(const std::string &path)
 {
-    FileRepository tmp(path);
-    return tmp.readLines();
+    return FileRepository(path).readLines();
 }
 
-bool FileRepository::safeWriteTo(const std::string &path,
-                                 const std::vector<std::string> &lines)
+bool FileRepository::safeWriteTo(const std::string &path, const std::vector<std::string> &lines)
 {
-    FileRepository tmp(path);
-    return tmp.safeWrite(lines);
+    return FileRepository(path).safeWrite(lines);
 }
 
 bool FileRepository::backupFileTo(const std::string &path)
 {
-    FileRepository tmp(path);
-    return tmp.backupFile();
+    return FileRepository(path).backupFile();
 }

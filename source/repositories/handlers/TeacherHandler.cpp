@@ -1,9 +1,19 @@
+/**
+ * @file TeacherHandler.cpp
+ * @brief Triển khai xử lý dữ liệu cho lớp Teacher.
+ */
+
 #include "TeacherHandler.h"
 #include "Teacher.h"
-#include <memory>
 
 TeacherHandler::TeacherHandler(const std::string &teacherFile)
-    : filePath(teacherFile) {}
+    : _filePath(teacherFile)
+{
+}
+
+// ------------------------------------------------------------
+//  Interface Implementation
+// ------------------------------------------------------------
 
 std::string TeacherHandler::getRole() const
 {
@@ -12,7 +22,7 @@ std::string TeacherHandler::getRole() const
 
 std::string TeacherHandler::getFilePath() const
 {
-    return filePath;
+    return _filePath;
 }
 
 std::vector<std::string> TeacherHandler::serialize(
@@ -21,6 +31,7 @@ std::vector<std::string> TeacherHandler::serialize(
     std::vector<std::string> result;
     for (const auto &u : users)
     {
+        // Chỉ lưu các User có vai trò là Teacher vào tệp tương ứng.
         if (u && u->getRole() == "Teacher")
         {
             result.push_back(u->toFileString());
@@ -36,11 +47,10 @@ std::vector<std::unique_ptr<User>> TeacherHandler::deserialize(
 
     for (const auto &line : lines)
     {
-        // Skip empty lines
         if (line.empty())
             continue;
 
-        // Split line by '|'
+        // --- Giai đoạn 1: Phân tách dữ liệu ---
         std::vector<std::string> fields;
         std::string temp = line;
         size_t pos = 0;
@@ -49,16 +59,16 @@ std::vector<std::unique_ptr<User>> TeacherHandler::deserialize(
             fields.push_back(temp.substr(0, pos));
             temp = temp.substr(pos + 1);
         }
-        fields.push_back(temp); // Last field
+        fields.push_back(temp);
 
-        // Skip if first field is not "Teacher"
+        // --- Giai đoạn 2: Kiểm tra cấu trúc ---
+        // Format yêu cầu 7 trường: Teacher|id|username|password|fullName|subject|assignedClass
         if (fields.empty() || fields[0] != "Teacher")
             continue;
-
-        // Parse: Teacher|id|username|password|fullName|subject|assignedClass
         if (fields.size() < 7)
             continue;
 
+        // --- Giai đoạn 3: Tái tạo đối tượng ---
         try
         {
             UserId id = std::stoi(fields[1]);
@@ -74,7 +84,7 @@ std::vector<std::unique_ptr<User>> TeacherHandler::deserialize(
         }
         catch (...)
         {
-            // Skip malformed lines
+            // Bỏ qua các dòng bị lỗi định dạng dữ liệu (ví dụ: ID hỏng).
             continue;
         }
     }
