@@ -5,32 +5,31 @@
 
 class ServiceContainer;
 
-// ============================================================
-//  app/AppInitializer.h
-//
-//  SINGLE RESPONSIBILITY: Initialize the application
-//  Reason to change: Only if initialization process changes
-//
-//  Handles:
-//  - Creating the ServiceContainer
-//  - Initializing all services and repositories
-//  - Returning container for UI layer to access services
-//
-//  Usage:
-//    auto container = AppInitializer::initializeApp();
-//    UserService *userSvc = container->getUserService();
-// ============================================================
-
+/**
+ * @brief Điểm khởi động duy nhất của ứng dụng.
+ *
+ * Chịu trách nhiệm tạo ServiceContainer đã được khởi tạo
+ * đầy đủ theo thứ tự: repositories → handlers → services.
+ *
+ * @note Không thể khởi tạo trực tiếp. Chỉ dùng qua
+ *       initializeApp().
+ *
+ * @example
+ *   auto container = AppInitializer::initializeApp();
+ *   auto* auth = container->getAuthService();
+ */
 class AppInitializer
 {
 public:
-    // Initialize the entire application and return service container
-    // Returns: unique_ptr to ServiceContainer (caller owns it)
-    // Throws: std::exception if initialization fails
+    /**
+     * @brief Khởi tạo toàn bộ dependency graph.
+     * @return unique_ptr<ServiceContainer> — ownership về caller.
+     * @throws std::runtime_error nếu khởi tạo thất bại.
+     */
     static std::unique_ptr<ServiceContainer> initializeApp();
 
 private:
-    AppInitializer() = default;
+    AppInitializer() = default; ///< Chỉ dùng static method.
 };
 
 #endif // APP_INITIALIZER_H

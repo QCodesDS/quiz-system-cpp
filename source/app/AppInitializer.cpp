@@ -1,19 +1,16 @@
+/**
+ * @file AppInitializer.cpp
+ * @brief Triển khai bootstrap ứng dụng.
+ */
+
 #include "AppInitializer.h"
 #include "ServiceContainer.h"
 
-// ============================================================
-//  app/AppInitializer.cpp
-//
-//  Application bootstrap code - initializes all services
-// ============================================================
-
 std::unique_ptr<ServiceContainer> AppInitializer::initializeApp()
 {
-    // Create service container
+    // Tạo container rồi wire toàn bộ dependency graph.
+    // Ownership được chuyển về caller (main.cpp) qua unique_ptr.
     auto container = std::make_unique<ServiceContainer>();
-
-    // Initialize all services and repositories
     container->initialize();
-
     return container;
 }
