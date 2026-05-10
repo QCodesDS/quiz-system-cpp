@@ -1,0 +1,3 @@
+Teacher|2001|nguyenan|9918992942059733373|Nguyễn Văn An|Math|10A
+Teacher|2002|tranbinh|9918992942059733373|Trần Thị Bình|Physics|11B
+Teacher|2003|lecuong|9918992942059733373|Lê Văn Cường|CPP|12C

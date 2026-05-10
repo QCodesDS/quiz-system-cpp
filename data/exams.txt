@@ -1,0 +1,6 @@
+1|Math|30|Practice|2001
+2|Math|60|Official|2001
+3|Physics|30|Practice|2002
+4|Physics|60|Official|2002
+5|CPP|30|Practice|2003
+6|CPP|60|Official|2003

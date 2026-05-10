@@ -1,0 +1,12 @@
+25|5|C++ được phát triển bởi ai?|Dennis Ritchie|Bjarne Stroustrup|James Gosling|Guido van Rossum|2|Easy
+26|5|Từ khóa khai báo hằng số trong C++ là?|var|let|const|static|3|Easy
+27|5|Toán tử truy cập member qua pointer là?|.|::|->|&|3|Easy
+28|5|Đuôi file mã nguồn C++ thường là?|.c|.java|.cpp|.py|3|Easy
+29|5|Hàm main trả về kiểu gì trong C++?|void|string|int|bool|3|Easy
+30|6|Tính năng nào KHÔNG có trong C?|Struct|Pointer|Class|Array|3|Medium
+31|6|Smart pointer chỉ cho phép một owner duy nhất là?|shared_ptr|weak_ptr|unique_ptr|auto_ptr|3|Medium
+32|6|RAII là viết tắt của?|Run And Initialize Immediately|Resource Acquisition Is Initialization|Random Access Is Invalid|Runtime Array Index Invalid|2|Medium
+33|6|Virtual destructor cần thiết khi nào?|Luôn luôn|Khi delete qua base pointer|Không bao giờ|Chỉ abstract class|2|Hard
+34|6|std::move() thực hiện điều gì?|Copy object|Convert sang rvalue reference|Delete object|Swap hai objects|2|Hard
+35|6|Override keyword dùng để làm gì?|Khai báo virtual|Xác nhận ghi đè hàm ảo|Ẩn hàm base|Tạo abstract function|2|Medium
+36|6|Toán tử :: dùng để làm gì?|Truy cập pointer|Truy cập scope|So sánh|Gán giá trị|2|Easy

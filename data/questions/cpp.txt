@@ -1,0 +1,12 @@
+13|3|Tốc độ ánh sáng trong chân không xấp xỉ bao nhiêu?|3x10^6 m/s|3x10^8 m/s|3x10^10 m/s|3x10^4 m/s|2|Easy
+14|3|Đơn vị đo lực trong hệ SI là?|Joule|Watt|Newton|Pascal|3|Easy
+15|3|Công thức tính động năng là?|mv|mv^2|1/2 mv^2|2mv^2|3|Easy
+16|3|Đơn vị đo công suất là?|Newton|Joule|Watt|Pascal|3|Easy
+17|3|Gia tốc có đơn vị là?|m/s|m/s^2|kg.m/s|N/m|2|Easy
+18|4|Gia tốc trọng trường g trên Trái Đất xấp xỉ bằng?|8.9 m/s^2|9.8 m/s^2|10.8 m/s^2|11 m/s^2|2|Medium
+19|4|Định luật Ohm: U = ?|R/I|I/R|IR|I+R|3|Medium
+20|4|Công thức tính điện trở là?|R=UI|R=U/I|R=I/U|R=U+I|2|Medium
+21|4|0 độ C bằng bao nhiêu Kelvin?|173K|273K|373K|473K|2|Medium
+22|4|Công thức tính công cơ học là?|A=F/s|A=F+s|A=F.s|A=F.s^2|3|Medium
+23|4|Hiện tượng giao thoa ánh sáng chứng tỏ ánh sáng có tính chất?|Hạt|Sóng|Cả hai|Không có|2|Hard
+24|4|Điện trở suất của vật liệu phụ thuộc vào?|Chiều dài|Tiết diện|Bản chất vật liệu|Hiệu điện thế|3|Hard
