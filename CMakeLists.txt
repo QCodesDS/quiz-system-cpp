@@ -54,13 +54,13 @@ include_directories(
 #  Executable
 # ============================================================
 
-add_executable(quiz-system ${SOURCES})
+add_executable(app ${SOURCES})
 
 # ============================================================
 #  Target Include Directories (modern CMake approach)
 # ============================================================
 
-target_include_directories(quiz-system PUBLIC
+target_include_directories(app PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
@@ -68,7 +68,7 @@ target_include_directories(quiz-system PUBLIC
 #  Output Directory
 # ============================================================
 
-set_target_properties(quiz-system PROPERTIES
+set_target_properties(app PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
@@ -80,4 +80,4 @@ message(STATUS "Quiz System CMake Configuration")
 message(STATUS "  C++ Standard: ${CMAKE_CXX_STANDARD}")
 message(STATUS "  Build Type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "  Source Files: ${SOURCES}")
-message(STATUS "  Executable: quiz-system")
+message(STATUS "  Executable: app")

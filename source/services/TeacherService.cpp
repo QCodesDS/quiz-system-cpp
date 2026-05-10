@@ -1,5 +1,6 @@
 #include "TeacherService.h"
 #include "IdGeneratorService.h"
+#include "AuthService.h"
 #include <algorithm>
 #include <memory>
 
@@ -64,7 +65,7 @@ bool TeacherService::addTeacher(const std::string &username,
 
     // Create new teacher
     users.push_back(
-        std::make_unique<Teacher>(newId, username, password, fullName, subject, assignedClass));
+        std::make_unique<Teacher>(newId, username, AuthService::hashPassword(password), fullName, subject, assignedClass));
 
     // Persist
     return userRepo->save(users);

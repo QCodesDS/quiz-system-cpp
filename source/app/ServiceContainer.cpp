@@ -31,13 +31,37 @@
 #include "QuizService.h"
 #include "ReportService.h"
 
+#include <filesystem>
 #include <stdexcept>
+
+// ------------------------------------------------------------------
+//  Đường dẫn file data
+// ------------------------------------------------------------------
+static std::string findDataDir()
+{
+    // Thử từ vị trí hiện tại lên tối đa 3 cấp
+    namespace fs = std::filesystem;
+    fs::path current = fs::current_path();
+
+    for (int i = 0; i < 4; i++)
+    {
+        fs::path candidate = current / "data";
+        if (fs::exists(candidate))
+        {
+            return candidate.string() + "/";
+        }
+        current = current.parent_path();
+    }
+
+    // Fallback
+    return "data/";
+}
 
 // ------------------------------------------------------------------
 //  Đường dẫn file data — tập trung tại đây để dễ thay đổi.
 //  TODO: Chuyển sang config.h khi project lớn hơn.
 // ------------------------------------------------------------------
-static const std::string DATA_DIR = "data/";
+static const std::string DATA_DIR = findDataDir();
 static const std::string ADMIN_FILE = DATA_DIR + "admins.txt";
 static const std::string TEACHER_FILE = DATA_DIR + "teachers.txt";
 static const std::string STUDENT_FILE = DATA_DIR + "students.txt";

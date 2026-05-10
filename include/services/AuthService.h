@@ -22,10 +22,10 @@ private:
     IUserRepository *userRepo;
     std::unique_ptr<User> currentUser; // nullptr if not logged in
 
+public:
     // Hash đơn giản để minh hoạ — thay bằng bcrypt/SHA ở production
     static std::string hashPassword(const std::string &plain);
 
-public:
     explicit AuthService(IUserRepository *userRepo);
 
     // --- IAuthService ---
