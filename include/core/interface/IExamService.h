@@ -1,9 +1,7 @@
 #ifndef I_EXAM_SERVICE_H
 #define I_EXAM_SERVICE_H
 
-#include "Exam.h"
-#include "Question.h"
-#include "enums.h"
+#include "core/models/Exam.h"
 
 /**
  * @brief Interface quản lý CRUD đề thi và câu hỏi.

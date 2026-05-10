@@ -1,8 +1,8 @@
 #ifndef RESULT_REPOSITORY_H
 #define RESULT_REPOSITORY_H
 
-#include "FileRepository.h"
-#include "IResultRepository.h"
+#include "repositories/FileRepository.h"
+#include "core/interface/IResultRepository.h"
 
 /**
  * @class ResultRepository

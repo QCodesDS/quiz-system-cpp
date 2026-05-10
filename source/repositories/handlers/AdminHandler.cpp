@@ -3,8 +3,8 @@
  * @brief Triển khai chi tiết việc chuyển đổi dữ liệu cho lớp Admin.
  */
 
-#include "AdminHandler.h"
-#include "Admin.h"
+#include "repositories/handlers/AdminHandler.h"
+#include "core/models/Admin.h"
 #include <memory>
 
 AdminHandler::AdminHandler(const std::string &adminFile)

@@ -1,7 +1,7 @@
 #ifndef I_AUTH_SERVICE_H
 #define I_AUTH_SERVICE_H
 
-#include "User.h"
+#include "core/models/User.h"
 
 /**
  * @brief Interface xác thực người dùng và quản lý phiên đăng nhập.

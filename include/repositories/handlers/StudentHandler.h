@@ -1,7 +1,7 @@
 #ifndef STUDENT_HANDLER_H
 #define STUDENT_HANDLER_H
 
-#include "IUserTypeHandler.h"
+#include "repositories/handlers/IUserTypeHandler.h"
 
 /**
  * @class StudentHandler

@@ -3,7 +3,7 @@
  * @brief Triển khai các phương thức quản lý nội dung đề thi.
  */
 
-#include "Exam.h"
+#include "core/models/Exam.h"
 #include <algorithm>
 
 /**

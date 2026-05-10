@@ -3,7 +3,7 @@
  * @brief Triển khai các hành vi chung của lớp cơ sở User.
  */
 
-#include "User.h"
+#include "core/models/User.h"
 
 User::User(UserId id,
            const std::string &username,

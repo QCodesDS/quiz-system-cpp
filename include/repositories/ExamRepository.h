@@ -1,8 +1,8 @@
 #ifndef EXAM_REPOSITORY_H
 #define EXAM_REPOSITORY_H
 
-#include "FileRepository.h"
-#include "IExamRepository.h"
+#include "repositories/FileRepository.h"
+#include "core/interface/IExamRepository.h"
 
 /**
  * @class ExamRepository

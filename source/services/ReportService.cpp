@@ -1,28 +1,24 @@
-#include "ReportService.h"
+#include "services/ReportService.h"
 #include <algorithm>
 #include <map>
-#include <set>
 #include <numeric>
-#include <memory>
-
-// ============================================================
-//  services/ReportService.cpp
-// ============================================================
+#include <set>
 
 ReportService::ReportService(IUserRepository *userRepo,
                              IResultRepository *resultRepo)
-    : userRepo(userRepo), resultRepo(resultRepo) {}
+    : _userRepo(userRepo), _resultRepo(resultRepo)
+{
+}
 
 // ------------------------------------------------------------
-//  getLeaderboard
-//  Với mỗi học sinh: tính điểm trung bình của tất cả lần thi.
-//  Sort giảm dần theo điểm trung bình.
+//  Bảng xếp hạng toàn trường (Tính theo điểm trung bình)
 // ------------------------------------------------------------
 std::vector<LeaderboardEntry> ReportService::getLeaderboard()
 {
-    auto results = resultRepo->load();
+    auto results = _resultRepo->load();
+    if (results.empty())
+        return {};
 
-    // Group by studentId
     std::map<StudentId, std::vector<double>> scoreMap;
     std::map<StudentId, std::string> nameMap;
 
@@ -33,21 +29,21 @@ std::vector<LeaderboardEntry> ReportService::getLeaderboard()
     }
 
     std::vector<LeaderboardEntry> board;
-    board.reserve(scoreMap.size());
-
     for (const auto &[sid, scores] : scoreMap)
     {
-        double avg = std::accumulate(scores.begin(), scores.end(), 0.0) / static_cast<double>(scores.size());
+        double sum = std::accumulate(scores.begin(), scores.end(), 0.0);
+        double avg = sum / static_cast<double>(scores.size());
 
         LeaderboardEntry entry;
         entry.studentId = sid;
         entry.studentName = nameMap[sid];
-        entry.subject = ""; // toàn trường — không filter môn
-        entry.bestScore = avg;
+        entry.subject = "All Subjects";
+        entry.bestScore = avg; // Ở đây dùng làm điểm đại diện để sort
         entry.attemptCount = static_cast<int>(scores.size());
         board.push_back(entry);
     }
 
+    // Sắp xếp giảm dần theo điểm trung bình
     std::sort(board.begin(), board.end(),
               [](const LeaderboardEntry &a, const LeaderboardEntry &b)
               {
@@ -58,17 +54,11 @@ std::vector<LeaderboardEntry> ReportService::getLeaderboard()
 }
 
 // ------------------------------------------------------------
-//  getScoresBySubject
-//  Với mỗi học sinh trong môn đó: lấy điểm cao nhất.
-//  Sort giảm dần theo bestScore.
+//  Bảng xếp hạng theo môn (Tính theo điểm cao nhất)
 // ------------------------------------------------------------
-std::vector<LeaderboardEntry> ReportService::getScoresBySubject(
-    const std::string &subject)
+std::vector<LeaderboardEntry> ReportService::getScoresBySubject(const std::string &subject)
 {
-
-    auto results = resultRepo->load();
-
-    // Filter theo môn
+    auto results = _resultRepo->load();
     std::map<StudentId, LeaderboardEntry> entryMap;
 
     for (const auto &r : results)
@@ -92,14 +82,13 @@ std::vector<LeaderboardEntry> ReportService::getScoresBySubject(
             auto &e = entryMap[sid];
             if (r.getScore() > e.bestScore)
                 e.bestScore = r.getScore();
-            ++e.attemptCount;
+            e.attemptCount++;
         }
     }
 
     std::vector<LeaderboardEntry> board;
-    board.reserve(entryMap.size());
-    for (const auto &[_, e] : entryMap)
-        board.push_back(e);
+    for (const auto &[_, entry] : entryMap)
+        board.push_back(entry);
 
     std::sort(board.begin(), board.end(),
               [](const LeaderboardEntry &a, const LeaderboardEntry &b)
@@ -111,56 +100,51 @@ std::vector<LeaderboardEntry> ReportService::getScoresBySubject(
 }
 
 // ------------------------------------------------------------
-//  getSystemStats
+//  Thống kê hệ thống (Dành cho Admin)
 // ------------------------------------------------------------
 SystemStats ReportService::getSystemStats()
 {
     SystemStats stats{};
 
-    // Đếm user
-    auto users = userRepo->load();
+    // Thống kê người dùng
+    auto users = _userRepo->load();
     for (const auto &u : users)
     {
         if (!u)
             continue;
         if (u->getRole() == "Student")
-            ++stats.totalStudents;
-        if (u->getRole() == "Teacher")
-            ++stats.totalTeachers;
+            stats.totalStudents++;
+        else if (u->getRole() == "Teacher")
+            stats.totalTeachers++;
     }
-    // users vector auto-cleans up
 
-    // Thống kê kết quả
-    auto results = resultRepo->load();
+    // Thống kê kết quả thi
+    auto results = _resultRepo->load();
     stats.totalAttempts = static_cast<int>(results.size());
 
-    // Đếm số đề thi unique
-    std::set<ExamId> examIds;
-    double totalScore = 0.0;
+    std::set<ExamId> uniqueExams;
+    double totalScoreSum = 0.0;
+
     for (const auto &r : results)
     {
-        examIds.insert(r.getExamId());
-        totalScore += r.getScore();
+        uniqueExams.insert(r.getExamId());
+        totalScoreSum += r.getScore();
     }
-    stats.totalExams = static_cast<int>(examIds.size());
-    stats.averageScore = results.empty()
-                             ? 0.0
-                             : totalScore / static_cast<double>(results.size());
+
+    stats.totalExams = static_cast<int>(uniqueExams.size());
+    stats.averageScore = results.empty() ? 0.0 : totalScoreSum / results.size();
 
     return stats;
 }
 
-// ------------------------------------------------------------
-//  getAverageScore
-// ------------------------------------------------------------
 double ReportService::getAverageScore(StudentId sid)
 {
-    auto results = resultRepo->findByStudent(sid);
+    auto results = _resultRepo->findByStudent(sid);
     if (results.empty())
         return 0.0;
 
-    double total = 0.0;
+    double sum = 0.0;
     for (const auto &r : results)
-        total += r.getScore();
-    return total / static_cast<double>(results.size());
+        sum += r.getScore();
+    return sum / results.size();
 }

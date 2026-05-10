@@ -1,7 +1,7 @@
 #ifndef USER_H
 #define USER_H
 
-#include "typedefs.h"
+#include "core/types/typedefs.h"
 
 /**
  * @class User

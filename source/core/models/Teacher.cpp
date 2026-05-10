@@ -3,7 +3,7 @@
  * @brief Triển khai các phương thức cụ thể cho lớp Teacher.
  */
 
-#include "Teacher.h"
+#include "core/models/Teacher.h"
 #include <iostream>
 
 Teacher::Teacher(UserId id, const std::string &username,
@@ -26,6 +26,16 @@ std::string Teacher::getAssignedClass() const { return _assignedClass; }
 void Teacher::setAssignedClass(const std::string &cls)
 {
     _assignedClass = cls;
+}
+
+void Teacher::setFullName(const std::string &name)
+{
+    _fullName = name;
+}
+
+void Teacher::setSubject(const std::string &subject)
+{
+    _subject = subject;
 }
 
 // ------------------------------------------------------------

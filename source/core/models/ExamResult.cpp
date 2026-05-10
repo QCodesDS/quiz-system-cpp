@@ -3,7 +3,7 @@
  * @brief Triển khai lưu trữ kết quả bài thi.
  */
 
-#include "ExamResult.h"
+#include "core/models/ExamResult.h"
 #include <iomanip>
 #include <sstream>
 

@@ -1,30 +1,37 @@
 #ifndef EXAM_SERVICE_H
 #define EXAM_SERVICE_H
 
-#include "IExamService.h"
-#include "IExamRepository.h"
+#include "core/interface/IExamService.h"
+#include "core/interface/IExamRepository.h"
 
-// ============================================================
-//  services/ExamService.h
-//
-//  CRUD đề thi và câu hỏi.
-//  Kiểm tra quyền: GV chỉ được sửa/xoá đề của chính mình.
-//  Admin không đi qua đây — Admin dùng trực tiếp repo nếu cần.
-// ============================================================
-
+/**
+ * @class ExamService
+ * @brief Tầng nghiệp vụ xử lý logic Đề thi và Câu hỏi.
+ *
+ * Các trách nhiệm chính:
+ * - Quản lý vòng đời Exam và Question (CRUD).
+ * - Đảm bảo tính toàn vẹn dữ liệu thông qua ID tự tăng.
+ * - Kiểm tra quyền sở hữu đối với Giảng viên.
+ */
 class ExamService : public IExamService
 {
 private:
-    IExamRepository *examRepo;
+    IExamRepository *_examRepo;
 
-    // ID tự tăng
+    // ------------------------------------------------------------
+    //  ID Generation Logic
+    // ------------------------------------------------------------
+
     ExamId nextExamId() const;
     QuestionId nextQuestionId() const;
 
 public:
     explicit ExamService(IExamRepository *examRepo);
 
-    // --- IExamService ---
+    // ------------------------------------------------------------
+    //  Triển khai IExamService
+    // ------------------------------------------------------------
+
     bool addExam(const std::string &subject, int durationMinutes,
                  ExamType type, TeacherId teacherId) override;
     bool removeExam(ExamId examId) override;
@@ -36,6 +43,10 @@ public:
 
     Exam *findExam(ExamId examId) override;
 
+    /**
+     * @brief Kiểm tra xem Giảng viên có quyền sửa đề thi này không.
+     * @return true nếu TeacherId trùng khớp với chủ sở hữu đề thi.
+     */
     bool hasEditPermission(const Exam &exam, TeacherId tid) override;
 };
 

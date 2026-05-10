@@ -7,29 +7,29 @@
  * nhận dependency qua constructor injection.
  */
 
-#include "ServiceContainer.h"
+#include "app/ServiceContainer.h"
 
-#include "UserRepository.h"
-#include "ExamRepository.h"
-#include "ResultRepository.h"
+#include "repositories/UserRepository.h"
+#include "repositories/ExamRepository.h"
+#include "repositories/ResultRepository.h"
 
-#include "AdminHandler.h"
-#include "TeacherHandler.h"
-#include "StudentHandler.h"
+#include "repositories/handlers/AdminHandler.h"
+#include "repositories/handlers/TeacherHandler.h"
+#include "repositories/handlers/StudentHandler.h"
+#include "repositories/handlers/IUserTypeHandler.h"
 
-#include "IUserRepository.h"
-#include "IExamRepository.h"
-#include "IResultRepository.h"
-#include "IUserTypeHandler.h"
+#include "core/interface/IUserRepository.h"
+#include "core/interface/IExamRepository.h"
+#include "core/interface/IResultRepository.h"
 
-#include "IdGeneratorService.h"
-#include "TeacherService.h"
-#include "StudentService.h"
-#include "UserService.h"
-#include "AuthService.h"
-#include "ExamService.h"
-#include "QuizService.h"
-#include "ReportService.h"
+#include "services/IdGeneratorService.h"
+#include "services/TeacherService.h"
+#include "services/StudentService.h"
+#include "services/UserService.h"
+#include "services/AuthService.h"
+#include "services/ExamService.h"
+#include "services/QuizService.h"
+#include "services/ReportService.h"
 
 #include <filesystem>
 #include <stdexcept>

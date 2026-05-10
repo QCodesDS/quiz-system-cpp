@@ -1,178 +1,143 @@
-#include "TeacherService.h"
-#include "IdGeneratorService.h"
-#include "AuthService.h"
+#include "services/TeacherService.h"
+#include "services/AuthService.h"
 #include <algorithm>
-#include <memory>
-
-// ============================================================
-//  services/TeacherService.cpp
-//
-//  SINGLE RESPONSIBILITY: Manage Teacher CRUD
-//  Extracted from UserService (SRP fix)
-// ============================================================
 
 TeacherService::TeacherService(IUserRepository *userRepo)
-    : userRepo(userRepo) {}
+    : _userRepo(userRepo)
+{
+}
 
-// ============================================================
-//  Validation Helpers
-// ============================================================
-
+// ------------------------------------------------------------
+// Validation
+// ------------------------------------------------------------
 bool TeacherService::usernameExists(const std::string &username) const
 {
-    return userRepo->usernameExists(username);
+    return _userRepo->usernameExists(username);
 }
 
 bool TeacherService::isValidUsername(const std::string &username) const
 {
-    return !username.empty();
+    return !username.empty() && username.length() >= 3;
 }
 
 bool TeacherService::isValidPassword(const std::string &password) const
 {
-    return password.size() >= 6;
+    return password.length() >= 6;
 }
 
-// ============================================================
-//  CREATE: Add new teacher
-// ============================================================
-
-bool TeacherService::addTeacher(const std::string &username,
-                                const std::string &password,
-                                const std::string &fullName,
-                                const std::string &subject,
+// ------------------------------------------------------------
+// Create: Thêm giảng viên mới
+// ------------------------------------------------------------
+bool TeacherService::addTeacher(const std::string &username, const std::string &password,
+                                const std::string &fullName, const std::string &subject,
                                 const std::string &assignedClass)
 {
-    // Validation
-    if (!isValidUsername(username))
+    if (!isValidUsername(username) || !isValidPassword(password) || usernameExists(username))
+    {
         return false;
-    if (!isValidPassword(password))
-        return false;
-    if (usernameExists(username))
-        return false;
+    }
 
-    // Load existing users (unique_ptr managed)
-    auto users = userRepo->load();
+    auto users = _userRepo->load();
 
-    // Generate new teacher ID
-    UserId newId = 2000;
+    // Tự động sinh ID cho Teacher (bắt đầu từ 2001)
+    UserId nextId = 2000;
     for (const auto &u : users)
     {
-        if (u && u->getRole() == "Teacher" && u->getId() > newId)
-            newId = u->getId();
-    }
-    newId++;
-
-    // Create new teacher
-    users.push_back(
-        std::make_unique<Teacher>(newId, username, AuthService::hashPassword(password), fullName, subject, assignedClass));
-
-    // Persist
-    return userRepo->save(users);
-    // Vector goes out of scope and cleans up all unique_ptrs
-}
-
-// ============================================================
-//  UPDATE: Modify existing teacher
-// ============================================================
-
-bool TeacherService::updateTeacher(UserId id,
-                                   const std::string &fullName,
-                                   const std::string &subject,
-                                   const std::string &assignedClass)
-{
-    auto users = userRepo->load();
-
-    bool found = false;
-    for (auto &u : users)
-    {
-        if (!u || u->getId() != id || u->getRole() != "Teacher")
-            continue;
-
-        Teacher *t = static_cast<Teacher *>(u.get());
-        // Create updated teacher with same id/username/password
-        // Release from unique_ptr to create new one
-        u = std::make_unique<Teacher>(
-            t->getId(),
-            t->getUsername(),
-            t->getPassword(),
-            fullName,
-            subject,
-            assignedClass);
-        found = true;
-        break;
-    }
-
-    return found && userRepo->save(users);
-    // Vector auto-cleans up
-}
-
-// ============================================================
-//  DELETE: Remove teacher
-// ============================================================
-
-bool TeacherService::removeTeacher(UserId id)
-{
-    auto users = userRepo->load();
-
-    auto it = std::find_if(users.begin(), users.end(),
-                           [id](const std::unique_ptr<User> &u)
-                           { return u && u->getId() == id && u->getRole() == "Teacher"; });
-
-    if (it == users.end())
-        return false;
-
-    users.erase(it); // unique_ptr auto-cleans up
-    return userRepo->save(users);
-    // Vector goes out of scope and cleans up remaining
-}
-
-// ============================================================
-//  QUERY: Get teachers
-// ============================================================
-
-std::vector<Teacher *> TeacherService::getAllTeachers() const
-{
-    std::vector<Teacher *> result;
-    auto users = userRepo->load();
-
-    for (auto &u : users)
-    {
-        if (u && u->getRole() == "Teacher")
+        if (u && u->getRole() == "Teacher" && u->getId() > nextId)
         {
-            // Release ownership from unique_ptr, give raw pointer to caller
-            result.push_back(static_cast<Teacher *>(u.release()));
+            nextId = u->getId();
         }
     }
-    return result;
-    // Remaining users in vector auto-clean up
+    nextId++;
+
+    users.push_back(std::make_unique<Teacher>(
+        nextId, username, AuthService::hashPassword(password),
+        fullName, subject, assignedClass));
+
+    return _userRepo->save(users);
 }
 
-Teacher *TeacherService::findTeacherById(UserId id) const
+// ------------------------------------------------------------
+// Update: Cập nhật thông tin giảng viên
+// ------------------------------------------------------------
+bool TeacherService::updateTeacher(UserId id, const std::string &fullName,
+                                   const std::string &subject, const std::string &assignedClass)
 {
-    auto users = userRepo->load();
+    auto users = _userRepo->load();
+    bool found = false;
 
     for (auto &u : users)
     {
         if (u && u->getId() == id && u->getRole() == "Teacher")
         {
-            // Release and return raw pointer
+            Teacher *t = static_cast<Teacher *>(u.get());
+            // Cập nhật các trường thông tin cho phép
+            t->setFullName(fullName);
+            t->setSubject(subject);
+            t->setAssignedClass(assignedClass);
+            found = true;
+            break;
+        }
+    }
+
+    return found && _userRepo->save(users);
+}
+
+// ------------------------------------------------------------
+// Delete
+// ------------------------------------------------------------
+bool TeacherService::removeTeacher(UserId id)
+{
+    auto users = _userRepo->load();
+    auto it = std::find_if(users.begin(), users.end(), [id](const std::unique_ptr<User> &u)
+                           { return u && u->getId() == id && u->getRole() == "Teacher"; });
+
+    if (it == users.end())
+        return false;
+
+    users.erase(it);
+    return _userRepo->save(users);
+}
+
+// ------------------------------------------------------------
+// Query: Trả về danh sách raw pointers cho UI
+// ------------------------------------------------------------
+std::vector<Teacher *> TeacherService::getAllTeachers() const
+{
+    std::vector<Teacher *> result;
+    auto users = _userRepo->load();
+
+    for (auto &u : users)
+    {
+        if (u && u->getRole() == "Teacher")
+        {
+            // Sử dụng u.release() ở đây là nguy hiểm nếu không cẩn thận.
+            // Giải pháp tốt nhất cho UI là trả về một bản copy hoặc trỏ vào data hiện có.
+            // Ở đây ta dùng release() để chuyển quyền sở hữu tạm thời cho vector kết quả.
+            result.push_back(static_cast<Teacher *>(u.release()));
+        }
+    }
+    return result;
+}
+
+Teacher *TeacherService::findTeacherById(UserId id) const
+{
+    auto users = _userRepo->load();
+    for (auto &u : users)
+    {
+        if (u && u->getId() == id && u->getRole() == "Teacher")
+        {
             return static_cast<Teacher *>(u.release());
         }
     }
     return nullptr;
-    // Remaining users auto-clean up
 }
-
-// ============================================================
-//  PASSWORD: Reset teacher password
-// ============================================================
 
 bool TeacherService::resetPassword(UserId id, const std::string &newHashedPassword)
 {
-    auto users = userRepo->load();
-
+    auto users = _userRepo->load();
     bool found = false;
+
     for (auto &u : users)
     {
         if (u && u->getId() == id && u->getRole() == "Teacher")
@@ -182,7 +147,5 @@ bool TeacherService::resetPassword(UserId id, const std::string &newHashedPasswo
             break;
         }
     }
-
-    return found && userRepo->save(users);
-    // Vector auto-cleans up
+    return found && _userRepo->save(users);
 }

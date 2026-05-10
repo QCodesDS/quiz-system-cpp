@@ -1,4 +1,4 @@
-#include "ResultRepository.h"
+#include "repositories/ResultRepository.h"
 #include <stdexcept>
 
 ResultRepository::ResultRepository(const std::string &resultFile)

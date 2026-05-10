@@ -3,7 +3,7 @@
  * @brief Triển khai logic cho các thuộc tính của câu hỏi trắc nghiệm.
  */
 
-#include "Question.h"
+#include "core/models/Question.h"
 
 /**
  * @brief Chuyển đổi Enum Difficulty sang chuỗi văn bản.

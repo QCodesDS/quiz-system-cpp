@@ -3,8 +3,8 @@
  * @brief Triển khai bootstrap ứng dụng.
  */
 
-#include "AppInitializer.h"
-#include "ServiceContainer.h"
+#include "app/AppInitializer.h"
+#include "app/ServiceContainer.h"
 
 std::unique_ptr<ServiceContainer> AppInitializer::initializeApp()
 {

@@ -2,7 +2,7 @@
 #define I_USER_REPOSITORY_H
 
 #include <memory>
-#include "User.h"
+#include "core/models/User.h"
 
 /**
  * @brief Interface lưu trữ và truy vấn dữ liệu người dùng.

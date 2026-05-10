@@ -1,7 +1,7 @@
 #ifndef I_RESULT_REPOSITORY_H
 #define I_RESULT_REPOSITORY_H
 
-#include "ExamResult.h"
+#include "core/models/ExamResult.h"
 
 /**
  * @brief Interface lưu trữ kết quả thi theo mô hình append-only.

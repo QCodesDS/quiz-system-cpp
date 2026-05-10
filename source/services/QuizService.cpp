@@ -1,18 +1,16 @@
-#include "QuizService.h"
+#include "services/QuizService.h"
 #include <ctime>
 #include <sstream>
 #include <iomanip>
 
-// ============================================================
-//  services/QuizService.cpp
-// ============================================================
-
 QuizService::QuizService(IExamRepository *examRepo,
                          IResultRepository *resultRepo)
-    : examRepo(examRepo), resultRepo(resultRepo) {}
+    : _examRepo(examRepo), _resultRepo(resultRepo)
+{
+}
 
 // ------------------------------------------------------------
-//  currentTimestamp — "YYYY-MM-DD HH:MM:SS"
+//  Helper: Timestamp Generation
 // ------------------------------------------------------------
 std::string QuizService::currentTimestamp()
 {
@@ -20,40 +18,38 @@ std::string QuizService::currentTimestamp()
     std::tm *t = std::localtime(&now);
 
     std::ostringstream oss;
+    // Sử dụng put_time để đảm bảo định dạng chuẩn ISO cho cơ sở dữ liệu file
     oss << std::put_time(t, "%Y-%m-%d %H:%M:%S");
     return oss.str();
 }
 
 // ------------------------------------------------------------
-//  canAttempt
-//  Official → kiểm tra kết quả cũ, nếu đã có thì false
-//  Practice → luôn true
+//  Quyền làm bài
 // ------------------------------------------------------------
 bool QuizService::canAttempt(StudentId studentId, ExamId examId)
 {
-    Exam *exam = examRepo->findById(examId);
+    Exam *exam = _examRepo->findById(examId);
     if (!exam)
         return false;
 
+    // Chế độ luyện tập: Luôn cho phép
     if (exam->getType() == ExamType::Practice)
         return true;
 
-    // Official: kiểm tra đã làm chưa
-    auto history = resultRepo->findByStudent(studentId);
-    for (const auto &r : history)
+    // Chế độ thi thật: Kiểm tra lịch sử trong ResultRepository
+    auto history = _resultRepo->findByStudent(studentId);
+    for (const auto &res : history)
     {
-        if (r.getExamId() == examId && r.getExamType() == ExamType::Official)
+        if (res.getExamId() == examId && res.getExamType() == ExamType::Official)
         {
-            return false; // đã làm rồi
+            return false; // Đã tồn tại kết quả thi chính thức
         }
     }
     return true;
 }
 
 // ------------------------------------------------------------
-//  calculateScore
-//  answers[i] = đáp án học sinh cho câu i (1–4, 0 = bỏ qua)
-//  Mỗi câu đúng được 10 / tổng số câu điểm
+//  Logic chấm điểm (Thang điểm 10)
 // ------------------------------------------------------------
 double QuizService::calculateScore(const Exam &exam,
                                    const std::vector<int> &answers)
@@ -62,22 +58,27 @@ double QuizService::calculateScore(const Exam &exam,
     if (questions.empty())
         return 0.0;
 
-    int correct = 0;
-    int total = static_cast<int>(questions.size());
+    int correctCount = 0;
+    int totalQuestions = static_cast<int>(questions.size());
 
-    for (int i = 0; i < total && i < static_cast<int>(answers.size()); ++i)
+    // So khớp từng câu trả lời với đáp án đúng
+    for (int i = 0; i < totalQuestions && i < static_cast<int>(answers.size()); ++i)
     {
         if (answers[i] == questions[i].getCorrectChoice())
-            ++correct;
+        {
+            correctCount++;
+        }
     }
 
-    return (static_cast<double>(correct) / total) * 10.0;
+    // Công thức: (Số câu đúng / Tổng số câu) * 10
+    double rawScore = (static_cast<double>(correctCount) / totalQuestions) * 10.0;
+
+    // Làm tròn đến 2 chữ số thập phân nếu cần (Tùy chọn)
+    return rawScore;
 }
 
 // ------------------------------------------------------------
-//  createResult
-//  Tạo ExamResult và tự động append vào resultRepo.
-//  Trả về object để UI có thể hiển thị ngay.
+//  Tạo và Lưu kết quả
 // ------------------------------------------------------------
 ExamResult QuizService::createResult(StudentId studentId,
                                      const std::string &studentName,
@@ -95,7 +96,9 @@ ExamResult QuizService::createResult(StudentId studentId,
         exam.getType(),
         currentTimestamp());
 
-    resultRepo->append(result);
+    // Tự động đẩy xuống tầng Persistence (ResultRepository)
+    _resultRepo->append(result);
+
     return result;
 }
 

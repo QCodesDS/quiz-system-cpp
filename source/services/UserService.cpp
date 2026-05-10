@@ -1,160 +1,122 @@
-#include "UserService.h"
-#include "IdGeneratorService.h"
-#include "TeacherService.h"
-#include "StudentService.h"
-#include <algorithm>
-#include <memory>
-
-// ============================================================
-//  services/UserService.cpp
-//
-//  REFACTORED: Facade pattern
-//  Delegates to specialized services
-//  Now has SINGLE responsibility: coordinate between services
-// ============================================================
+#include "services/UserService.h"
+#include "services/IdGeneratorService.h"
+#include "services/TeacherService.h"
+#include "services/StudentService.h"
 
 UserService::UserService(IUserRepository *userRepo,
                          IdGeneratorService *idGen,
                          TeacherService *teacherSvc,
                          StudentService *studentSvc)
-    : userRepo(userRepo),
-      idGen(idGen),
-      teacherSvc(teacherSvc),
-      studentSvc(studentSvc) {}
+    : _userRepo(userRepo), _idGen(idGen),
+      _teacherSvc(teacherSvc), _studentSvc(studentSvc)
+{
+}
 
-// ============================================================
-//  Helper: Find user by ID (used by generic operations)
-// ============================================================
-
+// ------------------------------------------------------------
+// Helper: Tìm kiếm User và quản lý quyền sở hữu bộ nhớ tạm thời
+// ------------------------------------------------------------
 User *UserService::findUserById(UserId id) const
 {
-    auto all = userRepo->load();
+    // load() trả về vector<unique_ptr<User>>
+    auto all = _userRepo->load();
     for (auto &u : all)
     {
         if (u && u->getId() == id)
         {
-            return static_cast<User *>(u.release());
+            // release() để lấy con trỏ thô mà không làm delete đối tượng khi unique_ptr hết hạn
+            return u.release();
         }
     }
-    // Vector auto-cleans up if not found
     return nullptr;
 }
 
-// ============================================================
-//  TEACHER CRUD: Delegate to TeacherService
-// ============================================================
-
-bool UserService::addTeacher(const std::string &username,
-                             const std::string &password,
-                             const std::string &fullName,
-                             const std::string &subject,
+// ------------------------------------------------------------
+// Thao tác với Giáo viên
+// ------------------------------------------------------------
+bool UserService::addTeacher(const std::string &username, const std::string &password,
+                             const std::string &fullName, const std::string &subject,
                              const std::string &assignedClass)
 {
-    return teacherSvc->addTeacher(username, password, fullName, subject, assignedClass);
+    return _teacherSvc->addTeacher(username, password, fullName, subject, assignedClass);
 }
 
-bool UserService::updateTeacher(UserId id,
-                                const std::string &fullName,
-                                const std::string &subject,
-                                const std::string &assignedClass)
+bool UserService::updateTeacher(UserId id, const std::string &fullName,
+                                const std::string &subject, const std::string &assignedClass)
 {
-    return teacherSvc->updateTeacher(id, fullName, subject, assignedClass);
+    return _teacherSvc->updateTeacher(id, fullName, subject, assignedClass);
 }
 
-// ============================================================
-//  STUDENT CRUD: Delegate to StudentService
-// ============================================================
-
-bool UserService::addStudent(const std::string &username,
-                             const std::string &password,
-                             const std::string &fullName,
-                             const std::string &className,
-                             Gender gender,
-                             int age,
-                             const std::string &phone)
+// ------------------------------------------------------------
+// Thao tác với Sinh viên
+// ------------------------------------------------------------
+bool UserService::addStudent(const std::string &username, const std::string &password,
+                             const std::string &fullName, const std::string &className,
+                             Gender gender, int age, const std::string &phone)
 {
-    return studentSvc->addStudent(username, password, fullName, className, gender, age, phone);
+    return _studentSvc->addStudent(username, password, fullName, className, gender, age, phone);
 }
 
-bool UserService::updateStudent(UserId id,
-                                const std::string &fullName,
-                                const std::string &className,
-                                Gender gender,
-                                int age,
-                                const std::string &phone)
+bool UserService::updateStudent(UserId id, const std::string &fullName,
+                                const std::string &className, Gender gender,
+                                int age, const std::string &phone)
 {
-    return studentSvc->updateStudent(id, fullName, className, gender, age, phone);
+    return _studentSvc->updateStudent(id, fullName, className, gender, age, phone);
 }
 
-// ============================================================
-//  GENERIC OPERATIONS: Remove user (delegates to appropriate service)
-// ============================================================
-
+// ------------------------------------------------------------
+// Điều hướng xóa User (Xác định vai trò để gọi Service đúng)
+// ------------------------------------------------------------
 bool UserService::removeUser(UserId id)
 {
-    // Find user to determine type
     std::unique_ptr<User> user(findUserById(id));
     if (!user)
         return false;
 
     std::string role = user->getRole();
-    // user unique_ptr will auto-cleanup when it goes out of scope
 
     if (role == "Teacher")
-    {
-        return teacherSvc->removeTeacher(id);
-    }
-    else if (role == "Student")
-    {
-        return studentSvc->removeStudent(id);
-    }
-    // Admin users should not be removed through this path
+        return _teacherSvc->removeTeacher(id);
+    if (role == "Student")
+        return _studentSvc->removeStudent(id);
+
     return false;
 }
 
-// ============================================================
-//  GENERIC OPERATIONS: Reset password (delegates to appropriate service)
-// ============================================================
-
+// ------------------------------------------------------------
+// Điều hướng Reset Password
+// ------------------------------------------------------------
 bool UserService::resetPassword(UserId id, const std::string &newHashedPass)
 {
-    // Find user to determine type
     std::unique_ptr<User> user(findUserById(id));
     if (!user)
         return false;
 
     std::string role = user->getRole();
-    // user unique_ptr will auto-cleanup when it goes out of scope
 
     if (role == "Teacher")
-    {
-        return teacherSvc->resetPassword(id, newHashedPass);
-    }
-    else if (role == "Student")
-    {
-        return studentSvc->resetPassword(id, newHashedPass);
-    }
-    // Admin password reset could be handled separately
+        return _teacherSvc->resetPassword(id, newHashedPass);
+    if (role == "Student")
+        return _studentSvc->resetPassword(id, newHashedPass);
+
     return false;
 }
 
-// ============================================================
-//  QUERIES: Delegate to appropriate services
-// ============================================================
-
+// ------------------------------------------------------------
+// Truy vấn dữ liệu (Delegation)
+// ------------------------------------------------------------
 std::vector<Teacher *> UserService::getAllTeachers() const
 {
-    return teacherSvc->getAllTeachers();
+    return _teacherSvc->getAllTeachers();
 }
 
 std::vector<Student *> UserService::getAllStudents() const
 {
-    return studentSvc->getAllStudents();
+    return _studentSvc->getAllStudents();
 }
 
 std::vector<Student *> UserService::getStudentsByClass(const std::string &className) const
 {
-    return studentSvc->getStudentsByClass(className);
+    return _studentSvc->getStudentsByClass(className);
 }
 
 User *UserService::findById(UserId id) const

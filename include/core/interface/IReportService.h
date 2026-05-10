@@ -1,7 +1,7 @@
 #ifndef I_REPORT_SERVICE_H
 #define I_REPORT_SERVICE_H
 
-#include "typedefs.h"
+#include "core/types/typedefs.h"
 
 /**
  * @brief Dữ liệu một dòng trong bảng xếp hạng.

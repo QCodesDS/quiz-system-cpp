@@ -1,7 +1,7 @@
 #ifndef I_EXAM_REPOSITORY_H
 #define I_EXAM_REPOSITORY_H
 
-#include "Exam.h"
+#include "core/models/Exam.h"
 
 /**
  * @brief Interface lưu trữ và truy vấn dữ liệu đề thi.

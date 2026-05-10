@@ -1,8 +1,8 @@
 #ifndef STUDENT_H
 #define STUDENT_H
 
-#include "User.h"
-#include "enums.h"
+#include "core/models/User.h"
+#include "core/types/enums.h"
 
 /**
  * @class Student
@@ -45,6 +45,16 @@ public:
     Gender getGender() const;
     int getAge() const;
     std::string getPhone() const;
+
+    // ------------------------------------------------------------
+    //  Setters
+    // ------------------------------------------------------------
+
+    void setFullName(const std::string &name);
+    void setClassName(const std::string &className);
+    void setGender(Gender gender);
+    void setAge(int age);
+    void setPhone(const std::string &phone);
 
     // ------------------------------------------------------------
     //  Overrides

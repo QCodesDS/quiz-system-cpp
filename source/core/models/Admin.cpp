@@ -7,7 +7,7 @@
  * với lớp cơ sở User.
  */
 
-#include "Admin.h"
+#include "core/models/Admin.h"
 #include <iostream>
 
 Admin::Admin(UserId id, const std::string &username,

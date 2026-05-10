@@ -1,8 +1,8 @@
 #ifndef I_QUIZ_SERVICE_H
 #define I_QUIZ_SERVICE_H
 
-#include "Exam.h"
-#include "ExamResult.h"
+#include "core/models/Exam.h"
+#include "core/models/ExamResult.h"
 
 /**
  * @brief Interface xử lý logic làm bài thi.

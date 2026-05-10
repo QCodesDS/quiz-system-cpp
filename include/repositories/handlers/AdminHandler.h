@@ -1,7 +1,7 @@
 #ifndef ADMIN_HANDLER_H
 #define ADMIN_HANDLER_H
 
-#include "IUserTypeHandler.h"
+#include "repositories/handlers/IUserTypeHandler.h"
 #include <string>
 
 /**

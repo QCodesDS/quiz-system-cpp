@@ -1,37 +1,23 @@
 #ifndef STUDENT_SERVICE_H
 #define STUDENT_SERVICE_H
 
-#include <string>
-#include <vector>
-#include <memory>
-#include "IUserRepository.h"
-#include "Student.h"
-#include "enums.h"
+#include "core/interface/IUserRepository.h"
+#include "core/models/Student.h"
+#include "core/types/enums.h"
 
-// ============================================================
-//  services/StudentService.h
-//
-//  SINGLE RESPONSIBILITY: Manage Student CRUD operations
-//  Reason to change: Only if Student business logic changes
-//
-//  Extracted from UserService (SRP violation fix)
-//  Responsibilities:
-//  - Create students with validation (age, phone)
-//  - Update student information
-//  - Remove students
-//  - Query students (by ID, by class)
-//  - Reset student password
-//
-//  SMART POINTERS: Uses vector<unique_ptr<User>> for all
-//  operations. No manual delete. RAII struct removed.
-// ============================================================
-
+/**
+ * @class StudentService
+ * @brief Quản lý toàn bộ nghiệp vụ liên quan đến Sinh viên.
+ *
+ * Đảm bảo các ràng buộc về dữ liệu (tuổi, số điện thoại)
+ * trước khi lưu xuống Repository.
+ */
 class StudentService
 {
 private:
-    IUserRepository *userRepo;
+    IUserRepository *_userRepo;
 
-    // Validation helpers
+    // Các hàm kiểm tra logic nghiệp vụ (Internal Validation)
     bool usernameExists(const std::string &username) const;
     bool isValidUsername(const std::string &username) const;
     bool isValidPassword(const std::string &password) const;
@@ -41,32 +27,25 @@ private:
 public:
     explicit StudentService(IUserRepository *userRepo);
 
-    // ========== CREATE ==========
-    bool addStudent(const std::string &username,
-                    const std::string &password,
-                    const std::string &fullName,
-                    const std::string &className,
-                    Gender gender,
-                    int age,
-                    const std::string &phone);
+    // --- CREATE ---
+    bool addStudent(const std::string &username, const std::string &password,
+                    const std::string &fullName, const std::string &className,
+                    Gender gender, int age, const std::string &phone);
 
-    // ========== UPDATE ==========
-    bool updateStudent(UserId id,
-                       const std::string &fullName,
-                       const std::string &className,
-                       Gender gender,
-                       int age,
-                       const std::string &phone);
+    // --- UPDATE ---
+    bool updateStudent(UserId id, const std::string &fullName,
+                       const std::string &className, Gender gender,
+                       int age, const std::string &phone);
 
-    // ========== DELETE ==========
+    // --- DELETE ---
     bool removeStudent(UserId id);
 
-    // ========== QUERY ==========
+    // --- QUERY ---
     std::vector<Student *> getAllStudents() const;
     std::vector<Student *> getStudentsByClass(const std::string &className) const;
     Student *findStudentById(UserId id) const;
 
-    // ========== PASSWORD ==========
+    // --- AUTH ---
     bool resetPassword(UserId id, const std::string &newHashedPassword);
 };
 

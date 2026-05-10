@@ -3,8 +3,8 @@
  * @brief Triển khai xử lý dữ liệu cho lớp Teacher.
  */
 
-#include "TeacherHandler.h"
-#include "Teacher.h"
+#include "repositories/handlers/TeacherHandler.h"
+#include "core/models/Teacher.h"
 
 TeacherHandler::TeacherHandler(const std::string &teacherFile)
     : _filePath(teacherFile)

@@ -1,33 +1,38 @@
 #ifndef QUIZ_SERVICE_H
 #define QUIZ_SERVICE_H
 
-#include "IQuizService.h"
-#include "IExamRepository.h"
-#include "IResultRepository.h"
+#include "core/interface/IQuizService.h"
+#include "core/interface/IExamRepository.h"
+#include "core/interface/IResultRepository.h"
 
-// ============================================================
-//  services/QuizService.h
-//
-//  Toàn bộ logic làm bài thi:
-//  - canAttempt()      : Official chỉ được làm 1 lần, Practice không giới hạn
-//  - calculateScore()  : so đáp án, tính điểm thang 10
-//  - createResult()    : tạo ExamResult + tự động lưu vào repo
-//  - isPassed()        : điểm >= 5.0
-// ============================================================
-
+/**
+ * @class QuizService
+ * @brief Điều phối logic thực hiện bài thi và chấm điểm.
+ *
+ * Trách nhiệm:
+ * - Kiểm soát quyền làm bài (chống thi lại bài thi chính thức).
+ * - Tính toán điểm số chính xác dựa trên đáp án.
+ * - Ghi nhận và lưu trữ kết quả cuối cùng.
+ */
 class QuizService : public IQuizService
 {
 private:
-    IExamRepository *examRepo;
-    IResultRepository *resultRepo;
+    IExamRepository *_examRepo;
+    IResultRepository *_resultRepo;
 
-    // Lấy timestamp hiện tại dạng "YYYY-MM-DD HH:MM:SS"
+    /**
+     * @brief Tiện ích lấy thời gian thực hệ thống.
+     * @return Chuỗi định dạng "YYYY-MM-DD HH:MM:SS"
+     */
     static std::string currentTimestamp();
 
 public:
     QuizService(IExamRepository *examRepo, IResultRepository *resultRepo);
 
-    // --- IQuizService ---
+    // ------------------------------------------------------------
+    //  Triển khai IQuizService
+    // ------------------------------------------------------------
+
     bool canAttempt(StudentId studentId, ExamId examId) override;
 
     double calculateScore(const Exam &exam,

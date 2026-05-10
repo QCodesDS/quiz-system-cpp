@@ -1,58 +1,65 @@
-#include "ExamService.h"
+#include "services/ExamService.h"
 #include <algorithm>
 
-// ============================================================
-//  services/ExamService.cpp
-// ============================================================
-
 ExamService::ExamService(IExamRepository *examRepo)
-    : examRepo(examRepo) {}
+    : _examRepo(examRepo)
+{
+}
 
 // ------------------------------------------------------------
-//  ID generation
+// ID Generation
+// Logic tìm ID lớn nhất hiện tại để tránh trùng lặp
 // ------------------------------------------------------------
 
 ExamId ExamService::nextExamId() const
 {
-    auto all = examRepo->load();
+    auto all = _examRepo->load();
     ExamId maxId = 0;
     for (const auto &e : all)
+    {
         if (e.getExamId() > maxId)
             maxId = e.getExamId();
+    }
     return maxId + 1;
 }
 
 QuestionId ExamService::nextQuestionId() const
 {
-    auto all = examRepo->load();
-    QuestionId maxId = 100;
+    auto all = _examRepo->load();
+    QuestionId maxId = 100; // Khởi tạo từ 100 để ID câu hỏi nhìn khác biệt với ID đề
     for (const auto &e : all)
+    {
         for (const auto &q : e.getQuestions())
+        {
             if (q.getId() > maxId)
                 maxId = q.getId();
+        }
+    }
     return maxId + 1;
 }
 
 // ------------------------------------------------------------
-//  IExamService
+// Exam CRUD Logic
 // ------------------------------------------------------------
 
 bool ExamService::addExam(const std::string &subject, int durationMinutes,
                           ExamType type, TeacherId teacherId)
 {
-    if (subject.empty())
-        return false;
-    if (durationMinutes <= 0)
+    // Validation cơ bản
+    if (subject.empty() || durationMinutes <= 0)
         return false;
 
-    auto all = examRepo->load();
+    auto all = _examRepo->load();
+
+    // Tạo đề thi mới và gán ID hợp lệ
     all.emplace_back(nextExamId(), subject, durationMinutes, type, teacherId);
-    return examRepo->save(all);
+
+    return _examRepo->save(all);
 }
 
 bool ExamService::removeExam(ExamId examId)
 {
-    auto all = examRepo->load();
+    auto all = _examRepo->load();
 
     auto it = std::find_if(all.begin(), all.end(),
                            [examId](const Exam &e)
@@ -60,80 +67,87 @@ bool ExamService::removeExam(ExamId examId)
 
     if (it == all.end())
         return false;
+
     all.erase(it);
-    return examRepo->save(all);
+    return _examRepo->save(all);
 }
+
+// ------------------------------------------------------------
+// Question Management Logic
+// ------------------------------------------------------------
 
 bool ExamService::addQuestion(ExamId examId, const Question &q)
 {
-    auto all = examRepo->load();
+    auto all = _examRepo->load();
 
     for (auto &e : all)
     {
-        if (e.getExamId() != examId)
-            continue;
-        // Tạo question mới với ID được gán tự động
-        // (q truyền vào có thể chưa có ID đúng — ExamService assign)
-        Question assigned(nextQuestionId(), examId,
-                          q.getContent(),
-                          q.getChoice(0), q.getChoice(1),
-                          q.getChoice(2), q.getChoice(3),
-                          q.getCorrectChoice(), q.getDifficulty());
-        e.addQuestion(assigned);
-        return examRepo->save(all);
-    }
+        if (e.getExamId() == examId)
+        {
+            // Gán ID mới cho câu hỏi trước khi thêm vào đề
+            Question assigned(nextQuestionId(), examId,
+                              q.getContent(),
+                              q.getChoice(0), q.getChoice(1),
+                              q.getChoice(2), q.getChoice(3),
+                              q.getCorrectChoice(), q.getDifficulty());
 
-    return false; // examId không tồn tại
+            e.addQuestion(assigned);
+            return _examRepo->save(all);
+        }
+    }
+    return false;
 }
 
 bool ExamService::updateQuestion(ExamId examId, QuestionId qId,
                                  const Question &newQ)
 {
-    auto all = examRepo->load();
+    auto all = _examRepo->load();
 
     for (auto &e : all)
     {
-        if (e.getExamId() != examId)
-            continue;
+        if (e.getExamId() == examId)
+        {
+            // Xóa câu hỏi cũ dựa trên qId
+            if (!e.removeQuestion(qId))
+                return false;
 
-        // Remove cũ, thêm mới với cùng qId
-        if (!e.removeQuestion(qId))
-            return false;
+            // Tạo đối tượng cập nhật với qId giữ nguyên
+            Question updated(qId, examId,
+                             newQ.getContent(),
+                             newQ.getChoice(0), newQ.getChoice(1),
+                             newQ.getChoice(2), newQ.getChoice(3),
+                             newQ.getCorrectChoice(), newQ.getDifficulty());
 
-        Question updated(qId, examId,
-                         newQ.getContent(),
-                         newQ.getChoice(0), newQ.getChoice(1),
-                         newQ.getChoice(2), newQ.getChoice(3),
-                         newQ.getCorrectChoice(), newQ.getDifficulty());
-        e.addQuestion(updated);
-        return examRepo->save(all);
+            e.addQuestion(updated);
+            return _examRepo->save(all);
+        }
     }
-
     return false;
 }
 
 bool ExamService::removeQuestion(ExamId examId, QuestionId qId)
 {
-    auto all = examRepo->load();
+    auto all = _examRepo->load();
 
     for (auto &e : all)
     {
-        if (e.getExamId() != examId)
-            continue;
-        if (!e.removeQuestion(qId))
-            return false;
-        return examRepo->save(all);
+        if (e.getExamId() == examId)
+        {
+            if (!e.removeQuestion(qId))
+                return false;
+            return _examRepo->save(all);
+        }
     }
-
     return false;
 }
 
 Exam *ExamService::findExam(ExamId examId)
 {
-    return examRepo->findById(examId);
+    return _examRepo->findById(examId);
 }
 
 bool ExamService::hasEditPermission(const Exam &exam, TeacherId tid)
 {
+    // Đề thi chỉ được chỉnh sửa bởi chính người tạo ra nó
     return exam.getTeacherId() == tid;
 }

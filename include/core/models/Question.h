@@ -1,8 +1,8 @@
 #ifndef QUESTION_H
 #define QUESTION_H
 
-#include "enums.h"
-#include "typedefs.h"
+#include "core/types/enums.h"
+#include "core/types/typedefs.h"
 
 /**
  * @class Question

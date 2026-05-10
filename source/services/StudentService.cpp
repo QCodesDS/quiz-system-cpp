@@ -1,165 +1,128 @@
-#include "StudentService.h"
-#include "IdGeneratorService.h"
+#include "services/StudentService.h"
 #include <algorithm>
-#include <memory>
-
-// ============================================================
-//  services/StudentService.cpp
-//
-//  SINGLE RESPONSIBILITY: Manage Student CRUD
-//  Extracted from UserService (SRP fix)
-// ============================================================
 
 StudentService::StudentService(IUserRepository *userRepo)
-    : userRepo(userRepo) {}
+    : _userRepo(userRepo)
+{
+}
 
-// ============================================================
-//  Validation Helpers
-// ============================================================
-
+// ------------------------------------------------------------
+// Validation Logic
+// ------------------------------------------------------------
 bool StudentService::usernameExists(const std::string &username) const
 {
-    return userRepo->usernameExists(username);
+    return _userRepo->usernameExists(username);
 }
 
 bool StudentService::isValidUsername(const std::string &username) const
 {
-    return !username.empty();
+    return !username.empty() && username.length() >= 3;
 }
 
 bool StudentService::isValidPassword(const std::string &password) const
 {
-    return password.size() >= 6;
+    return password.length() >= 6;
 }
 
 bool StudentService::isValidAge(int age) const
 {
-    return age >= 10 && age <= 25;
+    return age >= 10 && age <= 25; // Giới hạn độ tuổi học sinh/sinh viên
 }
 
 bool StudentService::isValidPhone(const std::string &phone) const
 {
-    return phone.size() == 10;
+    // Kiểm tra độ dài và đảm bảo toàn chữ số
+    return phone.length() == 10 &&
+           std::all_of(phone.begin(), phone.end(), ::isdigit);
 }
 
-// ============================================================
-//  CREATE: Add new student
-// ============================================================
-
-bool StudentService::addStudent(const std::string &username,
-                                const std::string &password,
-                                const std::string &fullName,
-                                const std::string &className,
-                                Gender gender,
-                                int age,
-                                const std::string &phone)
+// ------------------------------------------------------------
+// Create: Thêm sinh viên mới
+// ------------------------------------------------------------
+bool StudentService::addStudent(const std::string &username, const std::string &password,
+                                const std::string &fullName, const std::string &className,
+                                Gender gender, int age, const std::string &phone)
 {
-    // Validation
-    if (!isValidUsername(username))
+    if (!isValidUsername(username) || !isValidPassword(password) ||
+        !isValidAge(age) || !isValidPhone(phone) || usernameExists(username))
+    {
         return false;
-    if (!isValidPassword(password))
-        return false;
-    if (!isValidAge(age))
-        return false;
-    if (!isValidPhone(phone))
-        return false;
-    if (usernameExists(username))
-        return false;
+    }
 
-    // Load existing users (vector<unique_ptr<User>>)
-    auto users = userRepo->load();
+    auto users = _userRepo->load();
 
-    // Generate new student ID
-    UserId newId = 1000;
+    // Tự động sinh ID cho Student (bắt đầu từ 1001)
+    UserId nextId = 1000;
     for (const auto &u : users)
     {
-        if (u && u->getRole() == "Student" && u->getId() > newId)
-            newId = u->getId();
+        if (u && u->getRole() == "Student" && u->getId() > nextId)
+        {
+            nextId = u->getId();
+        }
     }
-    newId++;
+    nextId++;
 
-    // Create new student
-    users.push_back(
-        std::make_unique<Student>(newId, username, password, fullName, className, gender, age, phone));
+    users.push_back(std::make_unique<Student>(
+        nextId, username, password, fullName, className, gender, age, phone));
 
-    // Persist
-    return userRepo->save(users);
-    // Vector auto-cleans up remaining unique_ptrs
+    return _userRepo->save(users);
 }
 
-// ============================================================
-//  UPDATE: Modify existing student
-// ============================================================
-
-bool StudentService::updateStudent(UserId id,
-                                   const std::string &fullName,
-                                   const std::string &className,
-                                   Gender gender,
-                                   int age,
-                                   const std::string &phone)
+// ------------------------------------------------------------
+// Update: Cập nhật thông tin (vẫn giữ ID và Password cũ)
+// ------------------------------------------------------------
+bool StudentService::updateStudent(UserId id, const std::string &fullName,
+                                   const std::string &className, Gender gender,
+                                   int age, const std::string &phone)
 {
-    // Validation
-    if (!isValidAge(age))
-        return false;
-    if (!isValidPhone(phone))
+    if (!isValidAge(age) || !isValidPhone(phone))
         return false;
 
-    auto users = userRepo->load();
-
+    auto users = _userRepo->load();
     bool found = false;
+
     for (auto &u : users)
     {
-        if (!u || u->getId() != id || u->getRole() != "Student")
-            continue;
-
-        Student *s = static_cast<Student *>(u.get());
-        // Create updated student with same id/username/password
-        // Reassign unique_ptr (old one auto-cleans)
-        u = std::make_unique<Student>(
-            s->getId(),
-            s->getUsername(),
-            s->getPassword(),
-            fullName,
-            className,
-            gender,
-            age,
-            phone);
-        found = true;
-        break;
+        if (u && u->getId() == id && u->getRole() == "Student")
+        {
+            Student *s = static_cast<Student *>(u.get());
+            // Cập nhật thông tin chi tiết
+            s->setFullName(fullName);
+            s->setClassName(className);
+            s->setGender(gender);
+            s->setAge(age);
+            s->setPhone(phone);
+            found = true;
+            break;
+        }
     }
 
-    return found && userRepo->save(users);
-    // Vector auto-cleans up
+    return found && _userRepo->save(users);
 }
 
-// ============================================================
-//  DELETE: Remove student
-// ============================================================
-
+// ------------------------------------------------------------
+// Delete
+// ------------------------------------------------------------
 bool StudentService::removeStudent(UserId id)
 {
-    auto users = userRepo->load();
-
-    auto it = std::find_if(users.begin(), users.end(),
-                           [id](const std::unique_ptr<User> &u)
+    auto users = _userRepo->load();
+    auto it = std::find_if(users.begin(), users.end(), [id](const std::unique_ptr<User> &u)
                            { return u && u->getId() == id && u->getRole() == "Student"; });
 
     if (it == users.end())
         return false;
 
-    users.erase(it); // unique_ptr auto-cleans up
-    return userRepo->save(users);
+    users.erase(it);
+    return _userRepo->save(users);
 }
-// Vector auto-cleans up remaining
 
-// ============================================================
-//  QUERY: Get students
-// ============================================================
-
+// ------------------------------------------------------------
+// Query: Các hàm truy vấn trả về raw pointers cho UI
+// ------------------------------------------------------------
 std::vector<Student *> StudentService::getAllStudents() const
 {
     std::vector<Student *> result;
-    auto users = userRepo->load();
+    auto users = _userRepo->load();
     for (auto &u : users)
     {
         if (u && u->getRole() == "Student")
@@ -169,12 +132,11 @@ std::vector<Student *> StudentService::getAllStudents() const
     }
     return result;
 }
-// Remaining unique_ptrs auto-clean up
 
 std::vector<Student *> StudentService::getStudentsByClass(const std::string &className) const
 {
     std::vector<Student *> result;
-    auto users = userRepo->load();
+    auto users = _userRepo->load();
     for (auto &u : users)
     {
         if (u && u->getRole() == "Student")
@@ -187,30 +149,24 @@ std::vector<Student *> StudentService::getStudentsByClass(const std::string &cla
         }
     }
     return result;
-} // Remaining unique_ptrs auto-clean up
+}
 
 Student *StudentService::findStudentById(UserId id) const
 {
-    auto all = userRepo->load();
-    for (auto &u : all)
+    auto users = _userRepo->load();
+    for (auto &u : users)
     {
         if (u && u->getId() == id && u->getRole() == "Student")
         {
             return static_cast<Student *>(u.release());
         }
     }
-    // Vector auto-cleans up if not found
     return nullptr;
 }
 
-// ============================================================
-//  PASSWORD: Reset student password
-// ============================================================
-
 bool StudentService::resetPassword(UserId id, const std::string &newHashedPassword)
 {
-    auto users = userRepo->load();
-
+    auto users = _userRepo->load();
     bool found = false;
     for (auto &u : users)
     {
@@ -221,7 +177,5 @@ bool StudentService::resetPassword(UserId id, const std::string &newHashedPasswo
             break;
         }
     }
-
-    return found && userRepo->save(users);
-    // Vector auto-cleans up
+    return found && _userRepo->save(users);
 }

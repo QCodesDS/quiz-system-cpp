@@ -1,92 +1,60 @@
 #ifndef USER_SERVICE_H
 #define USER_SERVICE_H
 
-#include <string>
-#include <vector>
-#include "IUserRepository.h"
-#include "Teacher.h"
-#include "Student.h"
-#include "enums.h"
+#include "core/interface/IUserRepository.h"
+#include "core/models/Teacher.h"
+#include "core/models/Student.h"
 
-// Forward declarations to avoid circular includes
+// Forward declarations
 class IdGeneratorService;
 class TeacherService;
 class StudentService;
 
-// ============================================================
-//  services/UserService.h
-//
-//  REFACTORED: Facade pattern
-//  Delegates to specialized services (SRP fix)
-//
-//  This service now has ONE responsibility:
-//  - Coordinate between teacher/student services
-//  - Maintain backward compatibility
-//  - Generic user operations (remove by ID, reset password by ID)
-//
-//  EXTRACTED TO SEPARATE SERVICES:
-//  - IdGeneratorService:  ID generation logic
-//  - TeacherService:      Teacher CRUD & validation
-//  - StudentService:      Student CRUD & validation
-// ============================================================
-
+/**
+ * @class UserService
+ * @brief Facade Service - Điểm truy cập duy nhất cho các tác vụ liên quan đến người dùng.
+ *
+ * Tuân thủ SRP bằng cách ủy quyền logic chi tiết cho TeacherService và StudentService.
+ */
 class UserService
 {
 private:
-    IUserRepository *userRepo;
-    IdGeneratorService *idGen;
-    TeacherService *teacherSvc;
-    StudentService *studentSvc;
+    IUserRepository *_userRepo;
+    IdGeneratorService *_idGen;
+    TeacherService *_teacherSvc;
+    StudentService *_studentSvc;
 
-    // Helper: Find user by ID to determine type
+    // Helper nội bộ để xác định loại người dùng trước khi điều hướng
     User *findUserById(UserId id) const;
 
 public:
-    // Constructor: inject all dependencies
-    // NOTE: UserService does NOT own these - caller manages lifetime
     UserService(IUserRepository *userRepo,
                 IdGeneratorService *idGen,
                 TeacherService *teacherSvc,
                 StudentService *studentSvc);
 
-    // ========== TEACHER CRUD (delegates to TeacherService) ==========
-    bool addTeacher(const std::string &username,
-                    const std::string &password,
-                    const std::string &fullName,
-                    const std::string &subject,
+    // --- Quản lý Giáo viên (Delegates to TeacherService) ---
+    bool addTeacher(const std::string &username, const std::string &password,
+                    const std::string &fullName, const std::string &subject,
                     const std::string &assignedClass = "");
 
-    bool updateTeacher(UserId id,
-                       const std::string &fullName,
-                       const std::string &subject,
-                       const std::string &assignedClass);
+    bool updateTeacher(UserId id, const std::string &fullName,
+                       const std::string &subject, const std::string &assignedClass);
 
-    // ========== STUDENT CRUD (delegates to StudentService) ==========
-    bool addStudent(const std::string &username,
-                    const std::string &password,
-                    const std::string &fullName,
-                    const std::string &className,
-                    Gender gender,
-                    int age,
-                    const std::string &phone);
+    // --- Quản lý Sinh viên (Delegates to StudentService) ---
+    bool addStudent(const std::string &username, const std::string &password,
+                    const std::string &fullName, const std::string &className,
+                    Gender gender, int age, const std::string &phone);
 
-    bool updateStudent(UserId id,
-                       const std::string &fullName,
-                       const std::string &className,
-                       Gender gender,
-                       int age,
-                       const std::string &phone);
+    bool updateStudent(UserId id, const std::string &fullName,
+                       const std::string &className, Gender gender,
+                       int age, const std::string &phone);
 
-    // ========== GENERIC OPERATIONS ==========
-    // Remove any user by ID (determines type internally)
-    // Returns: true if found and removed, false otherwise
+    // --- Các thao tác dùng chung (Generic) ---
     bool removeUser(UserId id);
-
-    // Reset password for any user
-    // Returns: true if found and updated, false otherwise
     bool resetPassword(UserId id, const std::string &newHashedPass);
 
-    // ========== QUERIES ==========
+    // --- Truy vấn dữ liệu ---
     std::vector<Teacher *> getAllTeachers() const;
     std::vector<Student *> getAllStudents() const;
     std::vector<Student *> getStudentsByClass(const std::string &className) const;

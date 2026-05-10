@@ -1,38 +1,42 @@
 #ifndef AUTH_SERVICE_H
 #define AUTH_SERVICE_H
 
-// ============================================================
-//  services/AuthService.h
-//
-//  Quản lý xác thực và session hiện tại.
-//  Không có cout/cin. Không biết data lưu ở đâu.
-//
-//  SMART POINTER: currentUser is unique_ptr<User>
-//  Owns the current user session. Uses .reset() for logout,
-//  .move() for login. No manual delete anywhere.
-// ============================================================
+#include "core/interface/IAuthService.h"
+#include "core/interface/IUserRepository.h"
 
-#include "IAuthService.h"
-#include "IUserRepository.h"
-#include <memory>
-
+/**
+ * @class AuthService
+ * @brief Chịu trách nhiệm xác thực người dùng và duy trì trạng thái đăng nhập.
+ *
+ * Ưu điểm thiết kế:
+ * - Sử dụng Smart Pointers để quản lý vòng đời User (RAII).
+ * - Tách biệt hoàn toàn logic xác thực với tầng dữ liệu (Repository).
+ * - Chỉ cung cấp Raw Pointer cho các tầng trên (UI/App) để xem dữ liệu,
+ *   không cho phép can thiệp vào quyền sở hữu (ownership).
+ */
 class AuthService : public IAuthService
 {
 private:
-    IUserRepository *userRepo;
-    std::unique_ptr<User> currentUser; // nullptr if not logged in
+    IUserRepository *_userRepo;
+    std::unique_ptr<User> _currentUser; ///< Nullptr nếu chưa đăng nhập.
 
 public:
-    // Hash đơn giản để minh hoạ — thay bằng bcrypt/SHA ở production
+    /**
+     * @brief Mã hóa mật khẩu (Placeholder cho bcrypt/SHA-256).
+     */
     static std::string hashPassword(const std::string &plain);
 
     explicit AuthService(IUserRepository *userRepo);
 
-    // --- IAuthService ---
+    // ------------------------------------------------------------
+    //  Triển khai IAuthService
+    // ------------------------------------------------------------
+
     User *login(const std::string &username, const std::string &password) override;
     void logout() override;
     bool changePassword(User *user, const std::string &newPass) override;
     User *getCurrentUser() override;
+
     bool validateCredentials(const std::string &username,
                              const std::string &password) override;
 };

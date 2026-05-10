@@ -1,9 +1,9 @@
 #ifndef USER_REPOSITORY_H
 #define USER_REPOSITORY_H
 
-#include "FileRepository.h"
-#include "IUserRepository.h"
-#include "IUserTypeHandler.h"
+#include "repositories/FileRepository.h"
+#include "core/interface/IUserRepository.h"
+#include "repositories/handlers/IUserTypeHandler.h"
 
 /**
  * @class UserRepository

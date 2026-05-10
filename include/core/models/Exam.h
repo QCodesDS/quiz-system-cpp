@@ -1,7 +1,7 @@
 #ifndef EXAM_H
 #define EXAM_H
 
-#include "Question.h"
+#include "core/models/Question.h"
 
 /**
  * @class Exam

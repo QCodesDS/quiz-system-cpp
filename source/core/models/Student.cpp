@@ -3,7 +3,7 @@
  * @brief Triển khai các phương thức cụ thể cho lớp Student.
  */
 
-#include "Student.h"
+#include "core/models/Student.h"
 #include <iostream>
 
 /**
@@ -42,6 +42,35 @@ std::string Student::getClassName() const { return _className; }
 Gender Student::getGender() const { return _gender; }
 int Student::getAge() const { return _age; }
 std::string Student::getPhone() const { return _phone; }
+
+// ------------------------------------------------------------
+//  Setters
+// ------------------------------------------------------------
+
+void Student::setFullName(const std::string &name)
+{
+    _fullName = name;
+}
+
+void Student::setClassName(const std::string &className)
+{
+    _className = className;
+}
+
+void Student::setGender(Gender gender)
+{
+    _gender = gender;
+}
+
+void Student::setAge(int age)
+{
+    _age = age;
+}
+
+void Student::setPhone(const std::string &phone)
+{
+    _phone = phone;
+}
 
 // ------------------------------------------------------------
 //  Overrides

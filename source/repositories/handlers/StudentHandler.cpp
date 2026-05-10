@@ -3,9 +3,8 @@
  * @brief Triển khai logic Serialization và Deserialization cho Student.
  */
 
-#include "StudentHandler.h"
-#include "Student.h"
-#include "enums.h"
+#include "repositories/handlers/StudentHandler.h"
+#include "core/models/Student.h"
 
 StudentHandler::StudentHandler(const std::string &studentFile)
     : _filePath(studentFile)

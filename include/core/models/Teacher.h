@@ -1,7 +1,7 @@
 #ifndef TEACHER_H
 #define TEACHER_H
 
-#include "User.h"
+#include "core/models/User.h"
 
 /**
  * @class Teacher
@@ -43,6 +43,18 @@ public:
      * @param cls Tên lớp học mới.
      */
     void setAssignedClass(const std::string &cls);
+
+    /**
+     * @brief Cập nhật họ tên đầy đủ.
+     * @param name Họ tên mới.
+     */
+    void setFullName(const std::string &name);
+
+    /**
+     * @brief Cập nhật môn học giảng dạy.
+     * @param subject Môn học mới.
+     */
+    void setSubject(const std::string &subject);
 
     // ------------------------------------------------------------
     //  Override từ User
