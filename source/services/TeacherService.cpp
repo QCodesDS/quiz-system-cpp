@@ -10,6 +10,9 @@
 //  Extracted from UserService (SRP fix)
 // ============================================================
 
+TeacherService::TeacherService(IUserRepository *userRepo)
+    : userRepo(userRepo) {}
+
 // ============================================================
 //  Validation Helpers
 // ============================================================

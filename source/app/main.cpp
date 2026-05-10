@@ -1,60 +1,34 @@
-#include "AppInitializer.h"
 #include "ServiceContainer.h"
+#include "UserService.h"
+#include "AuthService.h"
+#include "enums.h"
 #include <iostream>
-#include <stdexcept>
-
-// ============================================================
-//  app/main.cpp
-//
-//  Application entry point - minimal logic here
-//
-//  RESPONSIBILITY: Only program entry and error handling
-//  All business logic is in services
-//  All initialization is in AppInitializer
-// ============================================================
+#include <iostream>
 
 int main()
 {
-    try
-    {
-        // Initialize the entire application
-        auto container = AppInitializer::initializeApp();
+    ServiceContainer container;
+    container.initialize();
 
-        // TODO: Pass container to UI layer (StudentUI, TeacherUI, AdminUI, etc.)
-        // For now, just verify services are available
-        if (!container || !container->getUserService())
-        {
-            std::cerr << "ERROR: Failed to initialize services\n";
-            return 1;
-        }
+    // Test 1: Services khởi tạo được
+    std::cout << "[OK] ServiceContainer initialized\n";
 
-        // Application is ready - hand control to UI layer
-        // UI layer will use container->getXxxService() to access services
-        // Example:
-        //   UserService *userSvc = container->getUserService();
-        //   AuthService *authSvc = container->getAuthService();
-        //   UI::showLoginScreen(authSvc);
+    // Test 2: Thêm teacher thử
+    auto *userSvc = container.getUserService();
+    bool ok = userSvc->addTeacher(
+        "teacher01", "pass123", "Nguyen Van A", "Math", "10A");
+    std::cout << (ok ? "[OK]" : "[FAIL]") << " addTeacher\n";
 
-        std::cout << "Quiz System initialized successfully\n";
-        std::cout << "Services ready: ";
-        std::cout << "[UserService] ";
-        std::cout << "[AuthService] ";
-        std::cout << "[ExamService] ";
-        std::cout << "[QuizService] ";
-        std::cout << "[ReportService]\n";
+    // Test 3: Thêm student thử
+    bool ok2 = userSvc->addStudent(
+        "student01", "pass123", "Tran Thi B",
+        "10A", Gender::Female, 16, "0912345678");
+    std::cout << (ok2 ? "[OK]" : "[FAIL]") << " addStudent\n";
 
-        // Placeholder: Application loop would go here
-        // For now, just exit cleanly
-        return 0;
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "ERROR: " << e.what() << "\n";
-        return 1;
-    }
-    catch (...)
-    {
-        std::cerr << "ERROR: Unknown exception occurred\n";
-        return 1;
-    }
+    // Test 4: Login thử
+    auto *authSvc = container.getAuthService();
+    auto *user = authSvc->login("teacher01", "pass123");
+    std::cout << (user ? "[OK]" : "[FAIL]") << " login\n";
+
+    return 0;
 }
