@@ -1,5 +1,6 @@
 #include "services/AuthService.h"
 #include <functional>
+#include <cstdint>
 
 AuthService::AuthService(IUserRepository *userRepo)
     : _userRepo(userRepo), _currentUser(nullptr)
@@ -12,8 +13,13 @@ AuthService::AuthService(IUserRepository *userRepo)
 // ------------------------------------------------------------
 std::string AuthService::hashPassword(const std::string &plain)
 {
-    std::size_t h = std::hash<std::string>{}(plain);
-    return std::to_string(h);
+    uint64_t hash = 14695981039346656037ULL;
+    for (char c : plain)
+    {
+        hash ^= static_cast<uint64_t>(c);
+        hash *= 1099511628211ULL;
+    }
+    return std::to_string(hash);
 }
 
 // ------------------------------------------------------------
