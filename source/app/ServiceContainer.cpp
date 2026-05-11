@@ -174,7 +174,7 @@ IdGeneratorService *ServiceContainer::getIdGeneratorService() const { return idG
 TeacherService *ServiceContainer::getTeacherService() const { return teacherSvc.get(); }
 StudentService *ServiceContainer::getStudentService() const { return studentSvc.get(); }
 UserService *ServiceContainer::getUserService() const { return userSvc.get(); }
-AuthService *ServiceContainer::getAuthService() const { return authSvc.get(); }
+IAuthService *ServiceContainer::getAuthService() const { return authSvc.get(); }
 ExamService *ServiceContainer::getExamService() const { return examSvc.get(); }
 QuizService *ServiceContainer::getQuizService() const { return quizSvc.get(); }
 ReportService *ServiceContainer::getReportService() const { return reportSvc.get(); }

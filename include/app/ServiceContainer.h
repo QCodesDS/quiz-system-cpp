@@ -9,6 +9,7 @@ class IUserRepository;
 class IExamRepository;
 class IResultRepository;
 class IUserTypeHandler;
+class IAuthService;
 
 class IdGeneratorService;
 class TeacherService;
@@ -39,7 +40,7 @@ class ReportService;
  * @example
  *   ServiceContainer container;
  *   container.initialize();
- *   AuthService* auth = container.getAuthService();
+ *   IAuthService* auth = container.getAuthService();
  */
 class ServiceContainer
 {
@@ -92,7 +93,7 @@ public:
     UserService *getUserService() const;
 
     /// @brief Trả về service xác thực và quản lý phiên đăng nhập.
-    AuthService *getAuthService() const;
+    IAuthService *getAuthService() const;
 
     /// @brief Trả về service quản lý CRUD đề thi và câu hỏi.
     ExamService *getExamService() const;
