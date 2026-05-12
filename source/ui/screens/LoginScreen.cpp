@@ -19,19 +19,19 @@ void LoginScreen::printBanner()
 {
     auto row = [](const std::string &content)
     {
-        std::cout << PURPLE << "║" << RESET << content << PURPLE << "║" << RESET << "\n";
+        std::cout << Color::PURPLE << "║" << Color::RESET << content << Color::PURPLE << "║" << Color::RESET << "\n";
     };
 
     std::cout << "\n";
-    std::cout << PURPLE << "╔══════════════════════════════════════════════════════════════╗" << RESET << "\n";
+    std::cout << Color::PURPLE << "╔══════════════════════════════════════════════════════════════╗" << Color::RESET << "\n";
     row("                                                              ");
-    row("           ★  " + std::string(BOLD) + "HỆ THỐNG QUẢN LÝ ĐỀ THI TRỰC TUYẾN" + RESET + "  ★           ");
+    row("           ★  " + std::string(Color::BOLD) + "HỆ THỐNG QUẢN LÝ ĐỀ THI TRỰC TUYẾN" + Color::RESET + "  ★           ");
     row("                                                              ");
-    std::cout << PURPLE << "╠══════════════════════════════════════════════════════════════╣" << RESET << "\n";
+    std::cout << Color::PURPLE << "╠══════════════════════════════════════════════════════════════╣" << Color::RESET << "\n";
     row("                                                              ");
-    row("                  " + std::string(GREEN) + "▶  ĐĂNG NHẬP HỆ THỐNG" + RESET + "                       ");
+    row("                  " + std::string(Color::GREEN) + "▶  ĐĂNG NHẬP HỆ THỐNG" + Color::RESET + "                       ");
     row("                                                              ");
-    std::cout << PURPLE << "╚══════════════════════════════════════════════════════════════╝" << RESET << "\n\n";
+    std::cout << Color::PURPLE << "╚══════════════════════════════════════════════════════════════╝" << Color::RESET << "\n\n";
 }
 
 std::string LoginScreen::getHiddenPassword()

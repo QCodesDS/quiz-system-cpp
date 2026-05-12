@@ -14,17 +14,17 @@ namespace ConsoleUtils
     {
         auto row = [](const std::string &content)
         {
-            std::cout << PURPLE << "║" << RESET << content << PURPLE << "║" << RESET << "\n";
+            std::cout << Color::PURPLE << "║" << Color::RESET << content << Color::PURPLE << "║" << Color::RESET << "\n";
         };
 
         clearScreen();
         std::cout << "\n";
-        std::cout << PURPLE << "╔════════════════════════════════════════════════════════════╗" << RESET << "\n";
+        std::cout << Color::PURPLE << "╔════════════════════════════════════════════════════════════╗" << Color::RESET << "\n";
         row("                                                            ");
-        row("                " + std::string(GREEN) + "✔  Cảm ơn bạn đã sử dụng!" + RESET + "                   ");
-        row("             " + std::string(BOLD) + "Hệ thống quản lý đề thi trực tuyến" + RESET + "             ");
+        row("                " + std::string(Color::GREEN) + "✔  Cảm ơn bạn đã sử dụng!" + Color::RESET + "                   ");
+        row("             " + std::string(Color::BOLD) + "Hệ thống quản lý đề thi trực tuyến" + Color::RESET + "             ");
         row("                                                            ");
-        std::cout << PURPLE << "╚════════════════════════════════════════════════════════════╝" << RESET << "\n\n";
+        std::cout << Color::PURPLE << "╚════════════════════════════════════════════════════════════╝" << Color::RESET << "\n\n";
     }
 
     bool askLoginAgainOrExit()

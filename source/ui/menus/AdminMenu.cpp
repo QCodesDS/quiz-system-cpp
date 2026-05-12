@@ -7,6 +7,7 @@
 #include "services/UserService.h"
 #include "services/AuthService.h"
 #include "enums.h"
+#include "app/constants.h"
 #include <iostream>
 #include <cstdlib>
 #include <conio.h>
@@ -28,21 +29,40 @@ bool AdminMenu::show(ServiceContainer *container, User *currentUser)
 
     while (!backToLogin)
     {
+        auto row = [](const std::string &content)
+        {
+            std::cout << Color::CYAN << "║" << Color::RESET
+                      << content
+                      << Color::CYAN << "║" << Color::RESET << "\n";
+        };
+
+        std::string greeting = "  Xin chào, " + currentUser->getFullName();
+
         clearScreen();
-
-        std::cout << "\n╔═══════════════════════════════════════════════════════╗\n";
-        std::cout << "║           MENU QUẢN TRỊ VIÊN HỆ THỐNG                 ║\n";
-        std::cout << "║                                                       ║\n";
-        std::cout << "║  Xin chào, " << std::setw(35) << std::left << currentUser->getFullName() << " ║\n";
-        std::cout << "║                                                       ║\n";
-        std::cout << "║  [1] Quản lý Giáo viên                                ║\n";
-        std::cout << "║  [2] Quản lý Học sinh                                 ║\n";
-        std::cout << "║  [L] Đăng xuất                                        ║\n";
-        std::cout << "║  [E] Thoát chương trình                               ║\n";
-        std::cout << "║                                                       ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════╝\n\n";
-
-        std::cout << "Lựa chọn của bạn: ";
+        std::cout << "\n";
+        std::cout << Color::CYAN << "╔═══════════════════════════════════════════════════════╗" << Color::RESET << "\n";
+        std::cout << Color::CYAN << "║" << Color::RESET
+                  << Color::BOLD << "           ⬡  MENU QUẢN TRỊ VIÊN HỆ THỐNG              " << Color::RESET
+                  << Color::CYAN << "║" << Color::RESET << "\n";
+        std::cout << Color::CYAN << "╠═══════════════════════════════════════════════════════╣" << Color::RESET << "\n";
+        row("                                                       ");
+        int visibleLen = (int)greeting.length(); // độ dài thực hiển thị (không có ANSI)
+        int totalInner = 55;                     // độ rộng bên trong ║...║
+        int pad = totalInner - visibleLen;
+        if (pad < 0)
+            pad = 0;
+        row(Color::YELLOW + Color::BOLD + greeting + Color::RESET + std::string(pad, ' '));
+        row("                                                       ");
+        std::cout << Color::CYAN << "╠═══════════════════════════════════════════════════════╣" << Color::RESET << "\n";
+        row("                                                       ");
+        row("  " + Color::BOLD + "[1]" + Color::RESET + " Quản lý Giáo viên                             ");
+        row("  " + Color::BOLD + "[2]" + Color::RESET + " Quản lý Học sinh                              ");
+        row("                                                       ");
+        row("  " + Color::DIM + "[L] Đăng xuất" + Color::RESET + "                                        ");
+        row("  " + Color::DIM + "[E] Thoát chương trình" + Color::RESET + "                                ");
+        row("                                                       ");
+        std::cout << Color::CYAN << "╚═══════════════════════════════════════════════════════╝" << Color::RESET << "\n\n";
+        std::cout << "  Lựa chọn: ";
         char choice;
         std::cin >> choice;
         std::cin.ignore();
